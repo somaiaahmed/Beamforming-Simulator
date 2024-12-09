@@ -64,6 +64,18 @@ class BeamformingApp(QMainWindow):
         array_layout.addWidget(QLabel('Array Geometry:'), 2, 0)
         array_layout.addWidget(self.array_type_combo, 2, 1)
 
+        self.curvature_radius_spin = QDoubleSpinBox()
+        self.curvature_radius_spin.setRange(1, 50)
+        self.curvature_radius_spin.setValue(10)
+        self.curvature_radius_spin.setSingleStep(0.5)
+        self.curvature_radius_spin.valueChanged.connect(self.update_array_visualization)
+        array_layout.addWidget(QLabel('Curvature Radius:'), 3, 0)
+        array_layout.addWidget(self.curvature_radius_spin, 3, 1)
+
+        # Make curvature radius control visible only for curved array
+        self.curvature_radius_spin.setVisible(False)
+        self.array_type_combo.currentIndexChanged.connect(self.toggle_curvature_control)
+        
         array_group.setLayout(array_layout)
         param_layout.addWidget(array_group)
 
@@ -126,6 +138,14 @@ class BeamformingApp(QMainWindow):
         
         
 
+
+        # ... [rest of the previous code remains the same]
+
+    def toggle_curvature_control(self):
+        # Show/hide curvature radius control based on array type
+        is_curved = self.array_type_combo.currentText() == 'Curved'
+        self.curvature_radius_spin.setVisible(is_curved)
+
     def update_array_visualization(self):
         # Clear previous visualization
         self.array_view.clear()
@@ -134,16 +154,23 @@ class BeamformingApp(QMainWindow):
         num_elements = self.num_elements_spin.value()
         element_spacing = self.element_spacing_spin.value()
         
-        # Create element positions
-        if self.array_type_combo.currentText() == 'Linear':
+        # Get array geometry type and curvature
+        geometry_type = self.array_type_combo.currentText()
+        
+        if geometry_type == 'Linear':
+            # Linear array
             x_positions = np.arange(num_elements) * element_spacing
             y_positions = np.zeros_like(x_positions)
         else:
-            # Curved array (simplified)
-            theta = np.linspace(0, np.pi, num_elements)
-            radius = 10  # Configurable radius could be added later
-            x_positions = radius * np.cos(theta)
-            y_positions = radius * np.sin(theta)
+            # Curved array
+            curvature_radius = self.curvature_radius_spin.value()
+            
+            # Distribute elements along an arc
+            arc_angle = np.pi  # Full semicircle, can be made configurable
+            theta = np.linspace(0, arc_angle, num_elements)
+            
+            x_positions = curvature_radius * np.cos(theta)
+            y_positions = curvature_radius * np.sin(theta)
 
         # Plot elements
         scatter = pg.ScatterPlotItem(x_positions, y_positions, 
@@ -154,14 +181,14 @@ class BeamformingApp(QMainWindow):
 
         max_radius = 5  # This can be adjusted to fit the beam's spread or array parameters
         num_circles = 4  # Number of concentric circles for each transducer
+        geometry_type = self.array_type_combo.currentText()
         for i in range(num_elements):
             for j in range(1, num_circles + 1):
                 radius = max_radius * j / num_circles
-                circle_theta = np.linspace(0, np.pi, 180)  # Full circle
+                circle_theta = np.linspace(0, 2*np.pi if geometry_type == 'Curved' else np.pi, 180)  
                 circle_x = x_positions[i] + radius * np.cos(circle_theta)
                 circle_y = y_positions[i] + radius * np.sin(circle_theta)
                 self.array_view.plot(circle_x, circle_y, pen=pg.mkPen(color='gray', style=Qt.DashLine))
-
         self.array_view.setLabel('bottom', 'X Position', units='λ')
         self.array_view.setLabel('left', 'Y Position', units='λ')
 
@@ -178,8 +205,19 @@ class BeamformingApp(QMainWindow):
     def update_array_geometry(self):
         # Update simulator with array geometry type
         geometry_type = self.array_type_combo.currentText()
+        
+        # Update simulator's array geometry 
+        # You might want to pass this information to the simulator if needed
+        if geometry_type == 'Linear':
+            self.simulator.array_type = 'linear'
+        else:
+            self.simulator.array_type = 'curved'
+            # Set curvature radius in the simulator if supported
+            self.simulator.curvature_radius = self.curvature_radius_spin.value()
+
         self.update_array_visualization()
         self.update_visualization()
+
 
     def load_scenario(self, index):
         scenario = self.scenario_combo.currentText()
