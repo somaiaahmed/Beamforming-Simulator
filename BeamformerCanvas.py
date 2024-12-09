@@ -12,7 +12,7 @@ class BeamformerCanvas(FigureCanvas):
         self.y = 0
         self.phase_shift = 0  # Initial phase shift in degrees
 
-        self.elements = []  # List to store element properties (x, y, phase_shift)
+        self.elements = []  # List to store element properties (x, y, phase_shift, gain)
 
         # Create a figure with two subplots
         self.fig, (self.ax_layout, self.ax_heatmap) = plt.subplots(
@@ -109,8 +109,6 @@ class BeamformerCanvas(FigureCanvas):
             color = 'blue'
         elif self.frequency == "20 MHz":
             spacing = 1.5  # Slightly smaller spacing
-            num_circles = 12  # More circles for medium frequency
-            color = 'green'
         elif self.frequency == "30 MHz":
             spacing = 1.0  # Smaller spacing for higher frequency
             num_circles = 15  # More circles for higher frequency
@@ -127,7 +125,7 @@ class BeamformerCanvas(FigureCanvas):
             y_offset = sin(phase_radians) * spacing  # Calculate y offset based on phase
             
             for i in range(1, num_circles + 1):  # Generate more circles as the frequency increases
-                radius = i * spacing
+                radius = i * spacing * (element["gain"] / 50)  # Adjust the radius based on gain
                 circle = Circle((element["x"] + x_offset, element["y"] + y_offset), radius, color=color, fill=False, linestyle='dotted', alpha=0.5)
                 self.ax_layout.add_patch(circle)
 
@@ -153,11 +151,23 @@ class BeamformerCanvas(FigureCanvas):
         """Update y-coordinate for new element."""
         self.y = y
         self.plot_beamformer()
+
+    def update_gain_for_element(self, element_index, gain):
+        """Update gain for a specific element."""
+        if 0 <= element_index < len(self.elements):
+            self.elements[element_index]["gain"] = gain
+            self.plot_beamformer()
+
+    def update_phase_shift_for_element(self, element_index, phase_shift):
+        """Update phase shift for a specific element."""
+        if 0 <= element_index < len(self.elements):
+            self.elements[element_index]["phase_shift"] = phase_shift
+            self.plot_beamformer()
         self.plot_heatMap()
 
     def add_element(self, x, y, phase_shift):
         """Add a new element with specified x, y coordinates and phase shift."""
-        self.elements.append({"x": x, "y": y, "phase_shift": phase_shift})
+        self.elements.append({"x": x, "y": y, "phase_shift": phase_shift, "gain": 50})
         self.plot_beamformer()
         self.plot_heatMap()
 
