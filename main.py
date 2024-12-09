@@ -178,6 +178,8 @@ class BeamformingApp(QMainWindow):
             # You might want to add more parameter updates here
 
         self.update_visualization()
+        
+
 
     def update_beam_angle(self, angle):
         self.beam_angle_label.setText(f'Beam Angle: {angle} degrees')
@@ -195,10 +197,27 @@ class BeamformingApp(QMainWindow):
         # Plot beam profile
         self.beam_profile_view.plot(beam_profile['x'], beam_profile['y'], pen=pg.mkPen(color='b', width=3))
         
-        # Plot interference map
-        interference_map = self.simulator.compute_interference_map()
-        img_item = pg.ImageItem(interference_map)
+        # Compute interference map
+        interference_data = self.simulator.compute_interference_map()
+        interference_map = interference_data['interference']
+
+        # Handle NaN values in the interference map
+        interference_map = np.nan_to_num(interference_map, nan=0.0)
+
+        # Normalize interference map for visualization
+        min_val, max_val = interference_map.min(), interference_map.max()
+        normalized_map = (interference_map - min_val) / (max_val - min_val)  # Normalize to [0, 1]
+
+        # Add color palette and display interference map
+        img_item = pg.ImageItem(normalized_map)
+        colormap = pg.colormap.get('plasma')  # Change to 'viridis', 'inferno', etc., if desired
+        img_item.setLookupTable(colormap.getLookupTable())
+        img_item.setLevels([0, 1])  # Set normalized levels
+
+        # Add the image item to the interference view
         self.interference_view.addItem(img_item)
+        self.interference_view.setAspectLocked(True)  # Maintain aspect ratio
+        self.interference_view.showGrid(x=True, y=True)  # Show grid for better visualization
 
 def main():
     app = QApplication(sys.argv)

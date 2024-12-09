@@ -84,15 +84,43 @@ class BeamformingSimulator:
         }
 
     def compute_interference_map(self):
-        # 2D interference map simulation with more complex pattern
-        x = np.linspace(-1, 1, 100)
-        y = np.linspace(-1, 1, 100)
+        # Define the grid for X and Y positions
+        x = np.linspace(0, 5, 250)  # Adjust grid size and range as needed
+        y = np.linspace(-5, 5, 500)
         X, Y = np.meshgrid(x, y)
         
-        # More complex interference pattern
-        # Incorporate beam angle and multiple spatial frequency components
-        interference = (np.sin(X * np.pi * self.num_elements + self.beam_angle) * 
-                        np.cos(Y * np.pi * self.num_elements) + 
-                        0.5 * np.sin(X * np.pi * 2 * self.num_elements))
+        # Wave parameters
+        k = 2 * np.pi / self.wavelength  # Wavenumber
+        d = self.element_spacing         # Element spacing
+
+        # Array of sources positioned linearly along the x-axis
+        sources_x = np.linspace(-self.num_elements * d / 2, 
+                                self.num_elements * d / 2, 
+                                self.num_elements)
+        sources_y = np.zeros_like(sources_x)  # All sources lie on y=0
+
+        # Calculate the interference pattern
+        interference = np.zeros_like(X)
+        for sx, sy in zip(sources_x, sources_y):
+            # Distance from source to every point on the grid
+            r = np.sqrt((X - sx)**2 + (Y - sy)**2)
+            # Add wave contributions (sine wave) from each source
+            interference += np.sin(k * r)
         
-        return interference
+        # Normalize the pattern for better visualization
+        interference_normalized = np.sin(interference)
+        
+        #  # Create a mask for 0° to 180° (positive Y-axis)
+        # angles = np.arctan2(X, Y)  # Compute angles in radians
+        # mask = (angles >= 0) & (angles <= np.pi)  # Mask for 180° to 360 (0 to π radians)
+        
+        # # mask = angles < 0
+        # # Apply the mask
+        # interference_normalized[~mask] = np.nan  # Set values outside the range to NaN
+
+
+        return {
+            'X': X,
+            'Y': Y,
+            'interference': interference_normalized
+        }
