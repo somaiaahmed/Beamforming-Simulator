@@ -1,0 +1,22 @@
+└── beamforming_simulator/
+    ├── main.py
+    ├── ui/
+    │   ├── __init__.py
+    │   ├── main_window.py
+    │   ├── beamforming_widget.py
+    │   └── parameter_dock.py
+    ├── core/
+    │   ├── __init__.py
+    │   ├── beamforming_engine.py
+    │   ├── array_configurations.py
+    │   └── scenarios.py
+    ├── utils/
+    │   ├── __init__.py
+    │   ├── signal_processing.py
+    │   └── visualization.py
+    ├── scenarios/
+    │   ├── __init__.py
+    │   ├── 5g_scenario.json
+    │   ├── ultrasound_scenario.json
+    │   └── tumor_ablation_scenario.json
+    └── requirements.txt

@@ -1,0 +1,19 @@
+{
+    "name": "Focused Ultrasound Ablation",
+    "array_type": "phased",
+    "frequency": 1.1e6,
+    "num_elements": 256,
+    "element_spacing": 0.01,
+    "focal_point": [0, 0, 100],
+    "power_levels": [10, 50, 100],
+    "description": "Precise tumor ablation using focused ultrasound",
+    "ablation_parameters": {
+        "target_temperature": 60,
+        "cooling_mechanism": "water_bath",
+        "treatment_duration": 300,
+        "safety_margins": {
+            "lateral": 5,
+            "axial": 3
+        }
+    }
+}

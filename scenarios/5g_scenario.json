@@ -1,0 +1,16 @@
+{
+    "name": "5G Massive MIMO",
+    "array_type": "linear",
+    "frequency": 28e9,
+    "num_elements": 64,
+    "element_spacing": 0.005,
+    "beam_steering_range": [-60, 60],
+    "max_steering_angle": 45,
+    "bandwidth": 100e6,
+    "description": "Massive MIMO scenario for high-frequency 5G communications",
+    "transmission_power": 23,  
+    "mimo_configuration": {
+        "spatial_streams": 4,
+        "modulation_scheme": "64-QAM"
+    }
+}
