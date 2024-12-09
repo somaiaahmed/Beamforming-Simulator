@@ -9,7 +9,7 @@ class BeamformerApp(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Beamformer GUI")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 1200, 800)
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
