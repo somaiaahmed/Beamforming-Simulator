@@ -212,9 +212,13 @@ class BeamformingApp(QMainWindow):
         r = beam_profile['y'][mask]
         x = r * np.cos(theta)
         y = r * np.sin(theta)
+        
+        phase_shift = np.deg2rad(self.simulator.beam_angle)
+        x_shifted = x * np.cos(phase_shift) - y * np.sin(phase_shift)
+        y_shifted = x * np.sin(phase_shift) + y * np.cos(phase_shift)
 
         # Plot the beam profile
-        self.beam_profile_view.plot(y, x, pen=pg.mkPen(color='cyan', width=2))
+        self.beam_profile_view.plot(y_shifted, x_shifted, pen=pg.mkPen(color='cyan', width=2))
 
         # Add polar grid for -90° to 90°
         max_radius = max(r)  # Determine the maximum radius for the grid
