@@ -147,10 +147,10 @@ class BeamformerCanvas(FigureCanvas):
         self.plot_beamformer()
         self.plot_heatMap()
 
-    def update_y_coordinate(self, y):
-        """Update y-coordinate for new element."""
-        self.y = y
-        self.plot_beamformer()
+    # def update_y_coordinate(self, y):
+    #     """Update y-coordinate for new element."""
+    #     self.y = y
+    #     self.plot_beamformer()
 
     def update_gain_for_element(self, element_index, gain):
         """Update gain for a specific element."""

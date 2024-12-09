@@ -1,5 +1,6 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QPushButton, QLineEdit, QLabel
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
+                            QComboBox, QPushButton, QLineEdit, QLabel, QRadioButton, QButtonGroup)
 from PyQt5.QtGui import QPalette, QColor
 
 from BeamformerCanvas import BeamformerCanvas
@@ -42,6 +43,23 @@ class BeamformerApp(QMainWindow):
         self.frequency_dropdown.currentTextChanged.connect(self.update_frequency)
         element_mixer_layout.addWidget(self.frequency_dropdown)
 
+        # Create two radio buttons
+        self.linear_button = QRadioButton("Linear")
+        self.curvature_button = QRadioButton("Curvature")
+
+        # Make sure only one radio button is selected at a time
+        button_group = QButtonGroup(self)
+        button_group.addButton(self.linear_button)
+        button_group.addButton(self.curvature_button)
+
+        # Set the default selection (optional)
+        self.linear_button.setChecked(True)  # Option 1 is selected by default
+
+        # Create a layout for the radio buttons
+        h_layout = QHBoxLayout()
+        h_layout.addWidget(self.linear_button)
+        h_layout.addWidget(self.curvature_button)
+        element_mixer_layout.addLayout(h_layout)
         # Phase shift input field
         self.phase_input = QLineEdit()
         self.phase_input.setPlaceholderText("Enter Phase Shift (degrees)")
@@ -51,19 +69,22 @@ class BeamformerApp(QMainWindow):
         element_mixer_layout.addWidget(self.phase_input)
 
         # x-coordinate and y-coordinate input fields
-        self.x_input = QLineEdit()
-        self.x_input.setPlaceholderText("Enter X-coordinate")
-        self.x_input.setStyleSheet("font-size: 12px; padding: 5px;")
-        self.x_input.textChanged.connect(self.update_x_coordinate)
-        element_mixer_layout.addWidget(QLabel("X-Coordinate Adjustment:"))
-        element_mixer_layout.addWidget(self.x_input)
+        self.distance_curvature_input = QLineEdit()
+        self.distance_curvature_input.setPlaceholderText("Enter X-coordinate")
+        self.distance_curvature_input.setStyleSheet("font-size: 12px; padding: 5px;")
+        self.distance_curvature_input.textChanged.connect(self.update_x_coordinate)
+        self.label = QLabel("X-Coordinate Adjustment:")
+        element_mixer_layout.addWidget(self.label)
+        element_mixer_layout.addWidget(self.distance_curvature_input)
 
-        self.y_input = QLineEdit()
-        self.y_input.setPlaceholderText("Enter Y-coordinate")
-        self.y_input.setStyleSheet("font-size: 12px; padding: 5px;")
-        self.y_input.textChanged.connect(self.update_y_coordinate)
-        element_mixer_layout.addWidget(QLabel("Y-Coordinate Adjustment:"))
-        element_mixer_layout.addWidget(self.y_input)
+        self.linear_button.toggled.connect(self.on_pattern_changed)
+        self.curvature_button.toggled.connect(self.on_pattern_changed)
+        # self.y_input = QLineEdit()
+        # self.y_input.setPlaceholderText("Enter Y-coordinate")
+        # self.y_input.setStyleSheet("font-size: 12px; padding: 5px;")
+        # self.y_input.textChanged.connect(self.update_y_coordinate)
+        # element_mixer_layout.addWidget(QLabel("Y-Coordinate Adjustment:"))
+        # element_mixer_layout.addWidget(self.y_input)
 
         # Add Element and Remove Element buttons
         button_layout = QHBoxLayout()
@@ -95,29 +116,32 @@ class BeamformerApp(QMainWindow):
         except ValueError:
             pass  # Ignore invalid input
 
+    def update_radius(self):
+        pass
+    
     def update_x_coordinate(self):
         """Update x-coordinate for new element when user types in the field."""
         try:
-            x = float(self.x_input.text())
+            x = float(self.distance_curvature_input.text())
             self.canvas.update_x_coordinate(x)
         except ValueError:
             pass  # Ignore invalid input
 
-    def update_y_coordinate(self):
-        """Update y-coordinate for new element when user types in the field."""
-        try:
-            y = float(self.y_input.text())
-            self.canvas.update_y_coordinate(y)
-        except ValueError:
-            pass  # Ignore invalid input
+    # def update_y_coordinate(self):
+    #     """Update y-coordinate for new element when user types in the field."""
+    #     try:
+    #         y = float(self.y_input.text())
+    #         self.canvas.update_y_coordinate(y)
+    #     except ValueError:
+    #         pass  # Ignore invalid input
 
     def add_element(self):
         """Add a new element with current x and y coordinates and phase shift."""
         try:
-            x = float(self.x_input.text())
-            y = float(self.y_input.text())
+            x = float(self.distance_curvature_input.text())
+            # y = float(self.y_input.text())
             phase_shift = float(self.phase_input.text())
-            self.canvas.add_element(x, y, phase_shift)
+            self.canvas.add_element(x, 0, phase_shift)
 
             # Create sliders for gain and phase shift
             element_sliders = ElementSliders(self.canvas, len(self.canvas.elements) - 1)
@@ -135,6 +159,18 @@ class BeamformerApp(QMainWindow):
             widget = item.widget()
             if widget:
                 widget.deleteLater()
+
+    def on_pattern_changed(self):
+        if self.linear_button.isChecked():
+            self.label.setText("X-Coordinate Adjustment:")
+            self.distance_curvature_input.setPlaceholderText("Enter X-coordinate")
+            self.distance_curvature_input.textChanged.disconnect()
+            self.distance_curvature_input.textChanged.connect(self.update_x_coordinate)
+        elif self.curvature_button.isChecked():
+            self.label.setText("Radius Adjustment:")
+            self.distance_curvature_input.setPlaceholderText("Enter radius")
+            self.distance_curvature_input.textChanged.disconnect()
+            self.distance_curvature_input.textChanged.connect(self.update_radius)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
