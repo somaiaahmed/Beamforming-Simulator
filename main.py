@@ -151,6 +151,17 @@ class BeamformingApp(QMainWindow):
                                      size=10, 
                                      brush='red')
         self.array_view.addItem(scatter)
+
+        max_radius = 5  # This can be adjusted to fit the beam's spread or array parameters
+        num_circles = 4  # Number of concentric circles for each transducer
+        for i in range(num_elements):
+            for j in range(1, num_circles + 1):
+                radius = max_radius * j / num_circles
+                circle_theta = np.linspace(0, np.pi, 180)  # Full circle
+                circle_x = x_positions[i] + radius * np.cos(circle_theta)
+                circle_y = y_positions[i] + radius * np.sin(circle_theta)
+                self.array_view.plot(circle_x, circle_y, pen=pg.mkPen(color='gray', style=Qt.DashLine))
+
         self.array_view.setLabel('bottom', 'X Position', units='λ')
         self.array_view.setLabel('left', 'Y Position', units='λ')
 
