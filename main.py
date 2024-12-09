@@ -1,7 +1,9 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QPushButton, QLineEdit, QLabel
 from PyQt5.QtGui import QPalette, QColor
+
 from BeamformerCanvas import BeamformerCanvas
+from ElementSliders import ElementSliders
 
 
 class BeamformerApp(QMainWindow):
@@ -77,6 +79,9 @@ class BeamformerApp(QMainWindow):
         self.remove_element_button.clicked.connect(self.remove_element)
         button_layout.addWidget(self.remove_element_button)
 
+        self.element_sliders_layout = QHBoxLayout()
+        layout.addLayout(self.element_sliders_layout)
+
     def update_frequency(self):
         """Update frequency selection and re-plot."""
         frequency = self.frequency_dropdown.currentText()
@@ -113,6 +118,10 @@ class BeamformerApp(QMainWindow):
             y = float(self.y_input.text())
             phase_shift = float(self.phase_input.text())
             self.canvas.add_element(x, y, phase_shift)
+
+            # Create sliders for gain and phase shift
+            element_sliders = ElementSliders(self.canvas, len(self.canvas.elements) - 1)
+            self.element_sliders_layout.addWidget(element_sliders)
         except ValueError:
             pass  # Ignore invalid input if the coordinates are not numbers
 
@@ -120,6 +129,12 @@ class BeamformerApp(QMainWindow):
         """Remove the last added element."""
         self.canvas.remove_element()
 
+        # Remove the last set of sliders
+        if self.element_sliders_layout.count() > 0:
+            item = self.element_sliders_layout.itemAt(self.element_sliders_layout.count() - 1)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
