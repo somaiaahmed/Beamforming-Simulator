@@ -9,6 +9,8 @@ import pyqtgraph as pg
 
 from beam_simulator import BeamformingSimulator
 from scenario_manager import ScenarioManager
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 class BeamformingApp(QMainWindow):
     def __init__(self):
@@ -121,6 +123,8 @@ class BeamformingApp(QMainWindow):
 
         # Initial visualization update
         self.update_array_visualization()
+        
+        
 
     def update_array_visualization(self):
         # Clear previous visualization
@@ -179,6 +183,76 @@ class BeamformingApp(QMainWindow):
 
         self.update_visualization()
         
+    
+
+    # def plot_beam_profile(self, beam_profile):
+    #     # Clear the previous plot
+    #     self.beam_profile_view.clear()
+
+    #     # Convert polar data to Cartesian
+    #     theta = np.deg2rad(beam_profile['x'])  # Convert degrees to radians
+    #     r = beam_profile['y']
+    #     x = r * np.cos(theta)
+    #     y = r * np.sin(theta)
+
+    #     # Plot the Cartesian data
+    #     self.beam_profile_view.plot(y, x, pen=pg.mkPen(color='cyan', width=2))
+
+    #     # Lock aspect ratio to make it circular
+    #     self.beam_profile_view.setAspectLocked(True)
+    
+    def plot_beam_profile(self, beam_profile):
+        # Clear the previous plot
+        self.beam_profile_view.clear()
+
+        # Convert polar data to Cartesian coordinates
+        theta = np.deg2rad(beam_profile['x'])  # Convert degrees to radians
+        r = beam_profile['y']
+        x = r * np.cos(theta)
+        y = r * np.sin(theta)
+
+        # Plot the beam profile
+        self.beam_profile_view.plot(y, x, pen=pg.mkPen(color='cyan', width=2))
+
+        # Add polar grid
+        max_radius = max(r)  # Determine the maximum radius for the grid
+        num_circles = 5      # Number of concentric circles
+        num_angles = 12      # Number of angle lines (e.g., every 30°)
+
+        # Add concentric circles
+        for i in range(1, num_circles + 1):
+            radius = max_radius * i / num_circles
+            circle_x = radius * np.cos(np.linspace(0, 2 * np.pi, 360))
+            circle_y = radius * np.sin(np.linspace(0, 2 * np.pi, 360))
+            self.beam_profile_view.plot(circle_x, circle_y, pen=pg.mkPen(color='gray', style=Qt.DashLine))
+
+        # Add radial lines (angle lines)
+        angles = np.linspace(0, 2 * np.pi, num_angles, endpoint=False)
+        for angle in angles:
+            line_x = [0, max_radius * np.cos(angle)]
+            line_y = [0, max_radius * np.sin(angle)]
+            self.beam_profile_view.plot(line_x, line_y, pen=pg.mkPen(color='gray', style=Qt.DashLine))
+
+        # Add angle labels
+        font = pg.QtGui.QFont("Arial", 8)
+        for angle in angles:
+            label_x = 1.1 * max_radius * np.cos(angle)
+            label_y = 1.1 * max_radius * np.sin(angle)
+            angle_deg = int(np.rad2deg(angle))
+            label = pg.TextItem(f"{angle_deg}°", anchor=(0.5, 0.5), color="white")
+            label.setFont(font)
+            label.setPos(label_x, label_y)
+            self.beam_profile_view.addItem(label)
+
+        # Lock the aspect ratio to ensure the plot is circular
+        self.beam_profile_view.setAspectLocked(True)
+
+        # Set axis labels for Cartesian reference
+        self.beam_profile_view.setLabel('bottom', 'X Position')
+        self.beam_profile_view.setLabel('left', 'Y Position')
+
+
+
 
 
     def update_beam_angle(self, angle):
@@ -189,14 +263,15 @@ class BeamformingApp(QMainWindow):
     def update_visualization(self):
         # Update beam profile
         beam_profile = self.simulator.compute_beam_profile()
-        
-        # Clear previous plots
-        self.beam_profile_view.clear()
-        self.interference_view.clear()
+
+        # # Clear previous plots
+        # self.beam_profile_view.clear()
+        # self.interference_view.clear()
 
         # Plot beam profile
-        self.beam_profile_view.plot(beam_profile['x'], beam_profile['y'], pen=pg.mkPen(color='b', width=3))
-        
+        # self.beam_profile_view.plot(beam_profile['x'], beam_profile['y'], pen=pg.mkPen(color='b', width=3))
+        self.plot_beam_profile(beam_profile)
+
         # Compute interference map
         interference_data = self.simulator.compute_interference_map()
         interference_map = interference_data['interference']

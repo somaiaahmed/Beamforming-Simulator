@@ -51,35 +51,38 @@ class BeamformingSimulator:
         self.beam_angle = angle
 
     def compute_beam_profile(self):
+        
         # Compute array factor
-        theta = np.linspace(-np.pi, np.pi, 1000)
+        theta = np.linspace(-np.pi / 2, np.pi / 2, 1000)  # Limit to -90 to 90 degrees
         
         # Compute phase shifts for beam steering
-        k = 2 * np.pi / self.wavelength
-        d = self.element_spacing
+        k = 2 * np.pi / self.wavelength  # Wave number
+        d = self.element_spacing         # Element spacing
         
         # Beam steering phase shift
         steering_phase = k * d * np.sin(np.deg2rad(self.beam_angle))
         
-        # Array factor computation with more realistic side lobe structure
-        array_factor = np.zeros_like(theta)
+        # Array factor computation
+        array_factor = np.zeros_like(theta, dtype=complex)
         for n in range(self.num_elements):
-            # Modified phase computation to create more varied side lobes
+            # Phase shift per element
             phase_shift = n * k * d * np.sin(theta) + steering_phase
             
-            # Non-linear weighting to create more realistic side lobe pattern
-            weight = 1.0 - 0.5 * (n / self.num_elements)**2
-            array_factor += weight * np.cos(phase_shift)
+            # Uniform weights for now
+            weight = 1.0  # Adjust as needed for tapered patterns
+            array_factor += weight * np.exp(1j * phase_shift)  # Use complex exponential for accurate computation
         
-        # Normalize array factor
+        # Convert to magnitude (intensity)
         array_factor = np.abs(array_factor / self.num_elements)
         
-        # Apply windowing to reduce side lobe levels
-        window = np.hanning(len(theta))
-        array_factor *= window
+        # Normalize array factor to emphasize side lobes
+        array_factor /= np.max(array_factor)
+        
+        # Convert theta to degrees for plotting
+        theta_deg = np.rad2deg(theta)
         
         return {
-            'x': np.rad2deg(theta),  # Convert to degrees for better readability
+            'x': theta_deg,
             'y': array_factor
         }
 
