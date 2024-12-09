@@ -193,7 +193,7 @@ class BeamformingApp(QMainWindow):
         self.interference_view.clear()
 
         # Plot beam profile
-        self.beam_profile_view.plot(beam_profile['x'], beam_profile['y'], pen='b')
+        self.beam_profile_view.plot(beam_profile['x'], beam_profile['y'], pen=pg.mkPen(color='b', width=3))
         
         # Plot interference map
         interference_map = self.simulator.compute_interference_map()

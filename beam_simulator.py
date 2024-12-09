@@ -52,7 +52,7 @@ class BeamformingSimulator:
 
     def compute_beam_profile(self):
         # Compute array factor
-        theta = np.linspace(-np.pi/2, np.pi/2, 1000)
+        theta = np.linspace(-np.pi, np.pi, 1000)
         
         # Compute phase shifts for beam steering
         k = 2 * np.pi / self.wavelength
@@ -61,14 +61,22 @@ class BeamformingSimulator:
         # Beam steering phase shift
         steering_phase = k * d * np.sin(np.deg2rad(self.beam_angle))
         
-        # Array factor computation
+        # Array factor computation with more realistic side lobe structure
         array_factor = np.zeros_like(theta)
         for n in range(self.num_elements):
+            # Modified phase computation to create more varied side lobes
             phase_shift = n * k * d * np.sin(theta) + steering_phase
-            array_factor += np.cos(phase_shift)
+            
+            # Non-linear weighting to create more realistic side lobe pattern
+            weight = 1.0 - 0.5 * (n / self.num_elements)**2
+            array_factor += weight * np.cos(phase_shift)
         
         # Normalize array factor
         array_factor = np.abs(array_factor / self.num_elements)
+        
+        # Apply windowing to reduce side lobe levels
+        window = np.hanning(len(theta))
+        array_factor *= window
         
         return {
             'x': np.rad2deg(theta),  # Convert to degrees for better readability
@@ -76,13 +84,15 @@ class BeamformingSimulator:
         }
 
     def compute_interference_map(self):
-        # 2D interference map simulation
+        # 2D interference map simulation with more complex pattern
         x = np.linspace(-1, 1, 100)
         y = np.linspace(-1, 1, 100)
         X, Y = np.meshgrid(x, y)
         
-        # Simplified interference pattern incorporating beam angle
-        interference = np.sin(X * np.pi * self.num_elements + self.beam_angle) * \
-                       np.cos(Y * np.pi * self.num_elements)
+        # More complex interference pattern
+        # Incorporate beam angle and multiple spatial frequency components
+        interference = (np.sin(X * np.pi * self.num_elements + self.beam_angle) * 
+                        np.cos(Y * np.pi * self.num_elements) + 
+                        0.5 * np.sin(X * np.pi * 2 * self.num_elements))
         
         return interference
