@@ -69,10 +69,12 @@ class BeamformingApp(QMainWindow):
         self.curvature_radius_spin.setValue(10)
         self.curvature_radius_spin.setSingleStep(0.5)
         self.curvature_radius_spin.valueChanged.connect(self.update_array_visualization)
-        array_layout.addWidget(QLabel('Curvature Radius:'), 3, 0)
+        self.radius_label = QLabel('Curvature Radius:')
+        array_layout.addWidget(self.radius_label, 3, 0)
         array_layout.addWidget(self.curvature_radius_spin, 3, 1)
 
         # Make curvature radius control visible only for curved array
+        self.radius_label.setVisible(False)
         self.curvature_radius_spin.setVisible(False)
         self.array_type_combo.currentIndexChanged.connect(self.toggle_curvature_control)
         
@@ -144,6 +146,7 @@ class BeamformingApp(QMainWindow):
     def toggle_curvature_control(self):
         # Show/hide curvature radius control based on array type
         is_curved = self.array_type_combo.currentText() == 'Curved'
+        self.radius_label.setVisible(is_curved)
         self.curvature_radius_spin.setVisible(is_curved)
 
     def update_array_visualization(self):
