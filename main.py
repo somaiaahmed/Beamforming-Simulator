@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout
                              QSpinBox, QGridLayout, QGroupBox, QDoubleSpinBox)
 from PyQt5.QtCore import Qt
 import pyqtgraph as pg
+from PyQt5.QtGui import QIcon, QColor
 
 from beam_simulator import BeamformingSimulator
 from scenario_manager import ScenarioManager
@@ -15,7 +16,8 @@ from matplotlib.figure import Figure
 class BeamformingApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('Advanced Beamforming Simulator')
+        self.setWindowTitle('Beamforming Simulator')
+        self.setWindowIcon(QIcon("imgs/logo.png"))
         self.setGeometry(100, 100, 1400, 800)
 
         # Central widget and main layout
@@ -94,6 +96,21 @@ class BeamformingApp(QMainWindow):
         beam_group.setLayout(beam_layout)
         param_layout.addWidget(beam_group)
 
+        # Array Element Visualization (moved here)
+        array_viz_group = QGroupBox("Array Elements Visualization")
+        array_viz_layout = QVBoxLayout()
+
+        self.array_view = pg.PlotWidget(title='Array Elements')
+        self.array_view.setAspectLocked(True)
+        self.array_view.showGrid(x=True, y=True)
+        self.array_view.setBackground(QColor("#2E3440"))  # Dark background
+        self.array_view.getAxis('left').setPen(color="#D8DEE9")  # Light text color
+        self.array_view.getAxis('bottom').setPen(color="#D8DEE9")
+
+        array_viz_layout.addWidget(self.array_view)
+        array_viz_group.setLayout(array_viz_layout)
+        param_layout.addWidget(array_viz_group)
+
         # Stretch to push everything up
         param_layout.addStretch(1)
 
@@ -104,28 +121,30 @@ class BeamformingApp(QMainWindow):
         viz_widget = QWidget()
         viz_layout = QVBoxLayout()
 
-        # Array Element Visualization
-        self.array_view = pg.PlotWidget(title='Array Elements')
-        self.array_view.setAspectLocked(True)
-        self.array_view.showGrid(x=True, y=True)
-        viz_layout.addWidget(QLabel('Array Elements Visualization'), stretch=0)
-        viz_layout.addWidget(self.array_view, stretch=1)
-
-        # Visualization Tabs
-        self.tab_widget = QTabWidget()
-        
-        # Beam Profile View
-        self.beam_profile_view = pg.PlotWidget(title='Beam Profile')
+        # Interference Map View
+        viz_layout.addWidget(QLabel('Interference Map'), stretch=0)
         self.interference_view = pg.PlotWidget(title='Interference Map')
-        
-        self.tab_widget.addTab(self.beam_profile_view, 'Beam Profile')
-        self.tab_widget.addTab(self.interference_view, 'Interference Map')
-        
-        viz_layout.addWidget(self.tab_widget, stretch=2)
-        viz_widget.setLayout(viz_layout)
-        
-        main_layout.addWidget(viz_widget, 3)
+        self.interference_view.setAspectLocked(True)
+        self.interference_view.showGrid(x=True, y=True)
+        self.interference_view.setBackground(QColor("#2E3440"))  # Dark background
+        self.interference_view.getAxis('left').setPen(color="#D8DEE9")  # Light text color
+        self.interference_view.getAxis('bottom').setPen(color="#D8DEE9")
+        viz_layout.addWidget(self.interference_view, stretch=1)
+        # Beam Profile View
+        viz_layout.addWidget(QLabel('Beam Profile'), stretch=0)
+        self.beam_profile_view = pg.PlotWidget(title='Beam Profile')
+        self.beam_profile_view.setAspectLocked(True)
+        self.beam_profile_view.showGrid(x=True, y=True)
+        self.beam_profile_view.setBackground(QColor("#2E3440"))  # Dark background
+        self.beam_profile_view.getAxis('left').setPen(color="#D8DEE9")  # Light text color
+        self.beam_profile_view.getAxis('bottom').setPen(color="#D8DEE9")
+        viz_layout.addWidget(self.beam_profile_view, stretch=1)
 
+        # Set layout to the right panel widget
+        viz_widget.setLayout(viz_layout)
+
+        # Add the right panel to the main layout
+        main_layout.addWidget(viz_widget, 3)
         central_widget.setLayout(main_layout)
         self.setCentralWidget(central_widget)
 
@@ -137,9 +156,6 @@ class BeamformingApp(QMainWindow):
         self.update_array_visualization()
         
         
-
-
-        # ... [rest of the previous code remains the same]
 
     def toggle_curvature_control(self):
         # Show/hide curvature radius control based on array type
@@ -353,6 +369,8 @@ class BeamformingApp(QMainWindow):
 
 def main():
     app = QApplication(sys.argv)
+    with open("style.qss", "r") as file:
+        app.setStyleSheet(file.read())
     beamforming_app = BeamformingApp()
     beamforming_app.show()
     sys.exit(app.exec_())
