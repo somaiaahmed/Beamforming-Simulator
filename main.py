@@ -259,7 +259,7 @@ class BeamformingApp(QMainWindow):
 
         # Convert polar data to Cartesian coordinates for the upper half (-90° to 90°)
         theta = np.deg2rad(beam_profile['x'])  # Convert degrees to radians
-        mask = (theta >= -np.pi / 2) & (theta <= np.pi / 2)  # Only upper half (-90° to 90°)
+        mask = (theta >= -np.pi) & (theta <= np.pi)  # Only upper half (-90° to 90°)
         theta = theta[mask]
         r = beam_profile['y'][mask]
         x = r * np.cos(theta)
@@ -280,13 +280,13 @@ class BeamformingApp(QMainWindow):
         # Add concentric circles (upper half only)
         for i in range(1, num_circles + 1):
             radius = max_radius * i / num_circles
-            circle_theta = np.linspace(-np.pi / 2, np.pi / 2, 360)
+            circle_theta = np.linspace(-np.pi, np.pi, 360)
             circle_x = radius * np.cos(circle_theta)
             circle_y = radius * np.sin(circle_theta)
             self.beam_profile_view.plot(circle_y, circle_x, pen=pg.mkPen(color='gray', style=Qt.DashLine))
 
         # Add radial lines (angle lines for -90° to 90°)
-        angles = np.linspace(-np.pi / 2, np.pi / 2, num_angles)
+        angles = np.linspace(-np.pi, np.pi, num_angles)
         for angle in angles:
             line_x = [0, max_radius * np.cos(angle)]
             line_y = [0, max_radius * np.sin(angle)]

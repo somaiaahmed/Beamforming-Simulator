@@ -9,6 +9,7 @@ class BeamformingSimulator:
         self.wavelength = 3e8 / self.frequency
         self.element_spacing = self.wavelength / 2
         self.beam_angle = 0
+        # self.array_type = 'linear'
         
         # Scenario-specific parameters
         self.scenarios = {
@@ -53,37 +54,49 @@ class BeamformingSimulator:
     def compute_beam_profile(self):
         
         # Compute array factor
-        theta = np.linspace(-np.pi / 2, np.pi / 2, 1000)  # Limit to -90 to 90 degrees
+        theta = np.linspace(-np.pi, np.pi, 1000)  # Limit to -90 to 90 degrees
         
         # Compute phase shifts for beam steering
-        k = 2 * np.pi / self.wavelength  # Wave number
-        d = self.element_spacing         # Element spacing
+        d = self.element_spacing / self.wavelength  # Normalized spacing
+        Nr = self.num_elements
+        X = np.ones((Nr, len(theta)), dtype=complex)
+
+        # positions = np.arange(-(self.num_elements - 1) / 2, (self.num_elements) / 2) * d
+
+        steering_angle = np.deg2rad(self.beam_angle)
         
         # Beam steering phase shift
-        steering_phase = k * d * np.sin(np.deg2rad(self.beam_angle))
+        # steering_phase = k * d * np.sin(np.deg2rad(self.beam_angle))
         
+        # progressive_phase = k * d * np.sin(steering_angle)
+
         # Array factor computation
-        array_factor = np.zeros_like(theta, dtype=complex)
-        for n in range(self.num_elements):
+        results = np.zeros_like(theta)
+        for i, theta_i in enumerate(theta):
             # Phase shift per element
-            phase_shift = n * k * d * np.sin(theta) + steering_phase
+            w = np.exp(-2j * np.pi * d * np.arange(Nr) * (np.sin(theta_i) - np.sin(steering_angle)))
             
-            # Uniform weights for now
-            weight = 1.0  # Adjust as needed for tapered patterns
-            array_factor += weight * np.exp(1j * phase_shift)  # Use complex exponential for accurate computation
+            # Apply weights to received signals
+            X_weighted = w.conj().T @ X[:, i]
+            
+            # Calculate power in dB
+            results[i] = 10 * np.log10(np.abs(X_weighted) ** 2)
         
-        # Convert to magnitude (intensity)
-        array_factor = np.abs(array_factor / self.num_elements)
-        
-        # Normalize array factor to emphasize side lobes
-        array_factor /= np.max(array_factor)
+        # Normalize results
+        results -= np.max(results)
         
         # Convert theta to degrees for plotting
         theta_deg = np.rad2deg(theta)
         
+        # Filter out values below -60 dB for cleaner visualization
+        results = np.maximum(results, -60)
+        
+        # Convert to linear scale for magnitude plot
+        magnitude = 1 + (results / 60)  # Scale to 0-1 range
+        
         return {
             'x': theta_deg,
-            'y': array_factor
+            'y': magnitude
         }
 
     def compute_interference_map(self):
