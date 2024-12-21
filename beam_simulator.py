@@ -54,7 +54,7 @@ class BeamformingSimulator:
     def compute_beam_profile(self):
         
         # Compute array factor
-        theta = np.linspace(-np.pi / 2, np.pi / 2, 1000)  # Limit to -90 to 90 degrees
+        theta = np.linspace(-np.pi, np.pi, 1000)  # Limit to -90 to 90 degrees
         
         # Compute phase shifts for beam steering
         d = self.element_spacing / self.wavelength  # Normalized spacing
