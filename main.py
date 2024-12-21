@@ -32,7 +32,7 @@ class BeamformingApp(QMainWindow):
         scenario_group = QGroupBox("Scenario")
         scenario_layout = QVBoxLayout()
         self.scenario_combo = QComboBox()
-        self.scenario_combo.addItems(['5G Beamforming', 'Ultrasound Imaging', 'Tumor Ablation'])
+        self.scenario_combo.addItems(['Choose Scenario','5G Beamforming', 'Ultrasound Imaging', 'Tumor Ablation'])
         self.scenario_combo.currentIndexChanged.connect(self.load_scenario)
         scenario_layout.addWidget(self.scenario_combo)
         scenario_group.setLayout(scenario_layout)
