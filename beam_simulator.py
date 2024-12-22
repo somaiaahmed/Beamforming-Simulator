@@ -100,43 +100,44 @@ class BeamformingSimulator:
         }
 
     def compute_interference_map(self):
-        # Define the grid for X and Y positions
-        x = np.linspace(0, 5, 250)  # Adjust grid size and range as needed
-        y = np.linspace(-5, 5, 500)
+        # Define the grid with appropriate range to show main lobe
+        x = np.linspace(0, 20, 400)  # Increased range in x direction
+        y = np.linspace(-10, 10, 400)
         X, Y = np.meshgrid(x, y)
         
         # Wave parameters
-        k = 2 * np.pi / self.wavelength  # Wavenumber
-        d = self.element_spacing         # Element spacing
-
-        # Array of sources positioned linearly along the x-axis
-        sources_x = np.linspace(-self.num_elements * d / 2, 
-                                self.num_elements * d / 2, 
-                                self.num_elements)
-        sources_y = np.zeros_like(sources_x)  # All sources lie on y=0
-
-        # Calculate the interference pattern
-        interference = np.zeros_like(X)
-        for sx, sy in zip(sources_x, sources_y):
-            # Distance from source to every point on the grid
-            r = np.sqrt((X - sx)**2 + (Y - sy)**2)
-            # Add wave contributions (sine wave) from each source
-            interference += np.sin(k * r)
+        k = 2 * np.pi / self.wavelength
         
-        # Normalize the pattern for better visualization
-        interference_normalized = np.sin(interference)
+        # Calculate array element positions
+        num_elements = self.num_elements
+        d = self.element_spacing
+        element_positions = np.linspace(-((num_elements-1)/2)*d, ((num_elements-1)/2)*d, num_elements)
         
-        #  # Create a mask for 0° to 180° (positive Y-axis)
-        # angles = np.arctan2(X, Y)  # Compute angles in radians
-        # mask = (angles >= 0) & (angles <= np.pi)  # Mask for 180° to 360 (0 to π radians)
+        # Calculate steering phase shifts
+        steering_angle_rad = np.deg2rad(self.beam_angle)
+        phase_shifts = k * element_positions * np.sin(steering_angle_rad)
         
-        # # mask = angles < 0
-        # # Apply the mask
-        # interference_normalized[~mask] = np.nan  # Set values outside the range to NaN
-
-
+        # Initialize field
+        field = np.zeros_like(X, dtype=complex)
+        
+        # Calculate field from each element
+        for pos, phase_shift in zip(element_positions, phase_shifts):
+            # Calculate distances from this element to all points
+            distances = np.sqrt((X)**2 + (Y - pos)**2)
+            
+            # Add contribution from this element with phase shift
+            # Removed the 1/sqrt(r) decay to better show the main lobe
+            field += np.exp(1j * (k * distances + phase_shift))
+        
+        # Calculate intensity
+        intensity = np.abs(field)**2
+        
+        # Log scale normalization to better show the pattern
+        intensity = np.log10(intensity + 1)  # Add 1 to avoid log(0)
+        intensity = intensity / np.max(intensity)
+        
         return {
             'X': X,
             'Y': Y,
-            'interference': interference_normalized
+            'interference': intensity
         }
