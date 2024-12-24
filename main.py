@@ -50,6 +50,27 @@ class BeamformingApp(QMainWindow):
         array_layout.addWidget(QLabel('Number of Elements:'), 0, 0)
         array_layout.addWidget(self.num_elements_spin, 0, 1)
 
+        # Frequency Control
+        # self.frequency_spin = QDoubleSpinBox()
+        # self.frequency_spin.setRange(1e6, 100e9)  # 1 MHz to 100 GHz
+        # self.frequency_spin.setValue(2.4e9)  # Default to 2.4 GHz
+        # self.frequency_spin.setSingleStep(1e6)  # Step by 1 MHz
+        # self.frequency_spin.setDecimals(1)
+        # self.frequency_spin.valueChanged.connect(self.update_frequency)
+
+        # # Add frequency unit selector
+        # self.frequency_unit = QComboBox()
+        # self.frequency_unit.addItems(['Hz', 'kHz', 'MHz', 'GHz'])
+        # self.frequency_unit.setCurrentText('GHz')
+        # self.frequency_unit.currentTextChanged.connect(self.update_frequency_display)
+
+        # freq_layout = QHBoxLayout()
+        # freq_layout.addWidget(self.frequency_spin)
+        # freq_layout.addWidget(self.frequency_unit)
+        
+        # array_layout.addWidget(QLabel('Frequency:'), 1, 0)
+        # array_layout.addLayout(freq_layout, 1, 1)
+
         # Element Spacing
         self.element_spacing_spin = QDoubleSpinBox()
         self.element_spacing_spin.setRange(0.1, 10)
@@ -234,6 +255,46 @@ class BeamformingApp(QMainWindow):
         self.update_array_visualization()
         self.update_visualization()
 
+    # def update_frequency(self):
+    #     # Get the frequency value and convert based on selected unit
+    #     value = self.frequency_spin.value()
+    #     unit = self.frequency_unit.currentText()
+        
+    #     # Convert to Hz based on selected unit
+    #     conversion = {
+    #         'Hz': 1,
+    #         'kHz': 1e3,
+    #         'MHz': 1e6,
+    #         'GHz': 1e9
+    #     }
+        
+    #     frequency_hz = value * conversion[unit]
+    #     self.simulator.frequency = frequency_hz
+    #     # Update wavelength and element spacing
+    #     self.simulator.wavelength = 3e8 / frequency_hz
+    #     self.simulator.element_spacing = self.simulator.wavelength / 2
+        
+    #     self.update_array_visualization()
+    #     self.update_visualization()
+    
+    # def update_frequency_display(self):
+    #     # Get current frequency in Hz
+    #     current_freq = self.simulator.frequency
+        
+    #     # Convert to selected unit
+    #     unit = self.frequency_unit.currentText()
+    #     conversion = {
+    #         'Hz': 1,
+    #         'kHz': 1e-3,
+    #         'MHz': 1e-6,
+    #         'GHz': 1e-9
+    #     }
+        
+    #     # Update spin box value without triggering valueChanged
+    #     self.frequency_spin.blockSignals(True)
+    #     self.frequency_spin.setValue(current_freq * conversion[unit])
+    #     self.frequency_spin.blockSignals(False)
+
 
     def load_scenario(self, index):
         scenario = self.scenario_combo.currentText()
@@ -248,7 +309,33 @@ class BeamformingApp(QMainWindow):
 
         self.update_visualization()
         
-    
+    # def load_scenario(self, index):
+    #     scenario = self.scenario_combo.currentText()
+    #     scenario_data = self.scenario_manager.load_scenario(scenario)
+        
+    #     if scenario_data:
+    #         # Update UI elements with scenario parameters
+    #         self.num_elements_spin.setValue(scenario_data['num_elements'])
+            
+    #         # Update frequency control
+    #         frequency = scenario_data['frequency']
+    #         # Determine best unit for display
+    #         if frequency >= 1e9:
+    #             self.frequency_unit.setCurrentText('GHz')
+    #             self.frequency_spin.setValue(frequency / 1e9)
+    #         elif frequency >= 1e6:
+    #             self.frequency_unit.setCurrentText('MHz')
+    #             self.frequency_spin.setValue(frequency / 1e6)
+    #         elif frequency >= 1e3:
+    #             self.frequency_unit.setCurrentText('kHz')
+    #             self.frequency_spin.setValue(frequency / 1e3)
+    #         else:
+    #             self.frequency_unit.setCurrentText('Hz')
+    #             self.frequency_spin.setValue(frequency)
+            
+    #         self.simulator.frequency = frequency
+            
+    #     self.update_visualization()
 
     # def plot_beam_profile(self, beam_profile):
     #     # Clear the previous plot
