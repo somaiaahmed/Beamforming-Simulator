@@ -300,8 +300,7 @@ class BeamformingApp(QMainWindow):
             # Update UI elements with scenario parameters
             self.num_elements_spin.setValue(scenario_data['num_elements'])
             self.simulator.frequency = scenario_data['frequency']
-            
-            # You might want to add more parameter updates here
+            self.simulator.load_scenario(scenario)
 
         self.update_visualization()
         

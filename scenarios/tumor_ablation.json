@@ -1,8 +1,8 @@
 {
     "name": "Tumor Ablation",
-    "num_elements": 32,
-    "frequency": 1000000.0,
-    "array_type": "linear",
+    "num_elements": 23,
+    "frequency": 900000000.0,
+    "array_type": "curved",
     "beam_angle_range": [
         -15,
         15

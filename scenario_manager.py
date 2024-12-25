@@ -12,23 +12,23 @@ class ScenarioManager:
         scenarios = {
             '5G_beamforming': {
                 'name': '5G Beamforming',
-                'num_elements': 64,
-                'frequency': 28e9,
+                'num_elements': 57,
+                'frequency': 1e9,
                 'array_type': 'linear',
                 'beam_angle_range': (-30, 30)
             },
             'ultrasound_imaging': {
                 'name': 'Ultrasound Imaging',
-                'num_elements': 128,
+                'num_elements': 7,
                 'frequency': 5e6,
                 'array_type': 'curved',
                 'beam_angle_range': (-45, 45)
             },
             'tumor_ablation': {
                 'name': 'Tumor Ablation',
-                'num_elements': 32,
-                'frequency': 1e6,
-                'array_type': 'linear',
+                'num_elements': 23,
+                'frequency': 0.9e9,
+                'array_type': 'curved',
                 'beam_angle_range': (-15, 15)
             }
         }
