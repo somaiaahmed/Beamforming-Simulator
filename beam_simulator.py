@@ -5,11 +5,11 @@ class BeamformingSimulator:
     def __init__(self):
         # Default parameters
         self.num_elements = 16
-        self.frequency = 2.4e9  # 2.4 GHz default
+        self.frequency = 1e9  # 2.4 GHz default
         self.wavelength = 3e8 / self.frequency
         self.element_spacing = self.wavelength / 2
         self.beam_angle = 0
-        # self.array_type = 'linear'
+        self.array_type = 'linear'
         
         # Scenario-specific parameters
         self.scenarios = {
@@ -51,51 +51,76 @@ class BeamformingSimulator:
     def set_beam_angle(self, angle):
         self.beam_angle = angle
 
+    def get_element_positions(self):
+        if self.array_type == 'linear':
+            # Linear array positions
+            x = np.arange(-(self.num_elements - 1) / 2, (self.num_elements) / 2) * self.element_spacing
+            y = np.zeros_like(x)
+            return x, y
+        else:
+            # Curved array positions
+            arc_length = (self.num_elements - 1) * self.element_spacing
+            angular_span = arc_length / self.curvature_radius
+            angles = np.linspace(-angular_span/2, angular_span/2, self.num_elements)
+            x = self.curvature_radius * np.sin(angles)
+            y = self.curvature_radius * (1 - np.cos(angles))
+            return x, y
+
     def compute_beam_profile(self):
+        # Compute viewing angles
+        theta = np.linspace(-np.pi, np.pi, 1000)
         
-        # Compute array factor
-        theta = np.linspace(-np.pi, np.pi, 1000)  # Limit to -90 to 90 degrees
+        # Get element positions
+        x_positions, y_positions = self.get_element_positions()
         
-        # Compute phase shifts for beam steering
-        d = self.element_spacing / self.wavelength  # Normalized spacing
-        Nr = self.num_elements
-        X = np.ones((Nr, len(theta)), dtype=complex)
-
-        # positions = np.arange(-(self.num_elements - 1) / 2, (self.num_elements) / 2) * d
-
+        # Convert beam steering angle to radians
         steering_angle = np.deg2rad(self.beam_angle)
         
-        # Beam steering phase shift
-        # steering_phase = k * d * np.sin(np.deg2rad(self.beam_angle))
-        
-        # progressive_phase = k * d * np.sin(steering_angle)
-
-        # Array factor computation
+        # Initialize results array
         results = np.zeros_like(theta)
-        for i, theta_i in enumerate(theta):
-            # Phase shift per element
-            w = np.exp(-2j * np.pi * d * np.arange(Nr) * (np.sin(theta_i) - np.sin(steering_angle)))
+        
+        # Compute contribution from each element
+        for angle_idx, view_angle in enumerate(theta):
+            # For each viewing angle, compute the phase difference from each element
+            total_field = 0
             
-            # Apply weights to received signals
-            X_weighted = w.conj().T @ X[:, i]
+            # Reference point for phase calculation (could be center of array)
+            x_ref = 0
+            y_ref = 0 if self.array_type == 'linear' else self.curvature_radius
             
-            # Calculate power in dB
-            results[i] = 10 * np.log10(np.abs(X_weighted) ** 2)
+            for x_pos, y_pos in zip(x_positions, y_positions):
+                # Compute path length difference
+                if self.array_type == 'linear':
+                    # For linear array
+                    path_diff = x_pos * (np.sin(view_angle) - np.sin(steering_angle))
+                else:
+                    # For curved array
+                    # Calculate path difference considering curved geometry
+                    dx = x_pos - x_ref
+                    dy = y_pos - y_ref
+                    path_diff = (dx * np.sin(view_angle) + dy * np.cos(view_angle) - 
+                               (dx * np.sin(steering_angle) + dy * np.cos(steering_angle)))
+                
+                # Compute phase
+                phase = 2 * np.pi * path_diff / self.wavelength
+                
+                # Add contribution from this element
+                total_field += np.exp(1j * phase)
+            
+            # Store magnitude of total field
+            results[angle_idx] = np.abs(total_field)
         
-        # Normalize results
-        results -= np.max(results)
+        # Normalize and convert to dB
+        results = 20 * np.log10(results / np.max(results))
         
-        # Convert theta to degrees for plotting
-        theta_deg = np.rad2deg(theta)
-        
-        # Filter out values below -60 dB for cleaner visualization
+        # Filter out values below -60 dB
         results = np.maximum(results, -60)
         
         # Convert to linear scale for magnitude plot
         magnitude = 1 + (results / 60)  # Scale to 0-1 range
         
         return {
-            'x': theta_deg,
+            'x': np.rad2deg(theta),
             'y': magnitude
         }
 
