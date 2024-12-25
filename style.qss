@@ -1,0 +1,54 @@
+QLabel {
+    font-size: 16px;
+    color: #3B4252;
+}
+/* Style for the left panel QGroupBox */
+QGroupBox {
+    background-color: #3B4252; /* Dark background */
+    border: 2px solid #D8DEE9; /* Light border */
+    border-radius: 10px; /* Rounded corners */
+    color: #D8DEE9; /* Text color */
+    padding: 10px;
+}
+
+/* Style for labels inside the left panel */
+QGroupBox QLabel {
+    color: #E5E9F0; /* Lighter text */
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* Style for combo boxes */
+QComboBox {
+    background-color: #4C566A; /* Slightly lighter than the panel */
+    border: 1px solid #D8DEE9;
+    border-radius: 5px;
+    color: #D8DEE9;
+    padding: 5px;
+}
+
+QComboBox::drop-down {
+    border-left: 1px solid #D8DEE9;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #4C566A;
+    color: #D8DEE9;
+    border: 1px solid #D8DEE9;
+}
+
+/* Style for sliders */
+QSlider::groove:horizontal {
+    height: 6px;
+    background: #D8DEE9;
+    border-radius: 3px;
+}
+
+QSlider::handle:horizontal {
+    background: #E5E9F0;
+    border: 1px solid #D8DEE9;
+    width: 15px;
+    height: 15px;
+    margin: -5px 0;
+    border-radius: 7px;
+}

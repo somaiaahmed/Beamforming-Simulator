@@ -9,7 +9,7 @@ class BeamformingSimulator:
         self.wavelength = 3e8 / self.frequency
         self.element_spacing = self.wavelength / 2
         self.beam_angle = 0
-        # self.array_type = 'linear'
+        self.array_type = 'linear'
         
         # Scenario-specific parameters
         self.scenarios = {
@@ -51,92 +51,118 @@ class BeamformingSimulator:
     def set_beam_angle(self, angle):
         self.beam_angle = angle
 
+    def get_element_positions(self):
+        if self.array_type == 'linear':
+            # Linear array positions
+            x = np.arange(-(self.num_elements - 1) / 2, (self.num_elements) / 2) * self.element_spacing
+            y = np.zeros_like(x)
+            return x, y
+        else:
+            # Curved array positions
+            arc_length = (self.num_elements - 1) * self.element_spacing
+            angular_span = arc_length / self.curvature_radius
+            angles = np.linspace(-angular_span/2, angular_span/2, self.num_elements)
+            x = self.curvature_radius * np.sin(angles)
+            y = self.curvature_radius * (1 - np.cos(angles))
+            return x, y
+
     def compute_beam_profile(self):
+        # Compute viewing angles
+        theta = np.linspace(-np.pi, np.pi, 1000)
         
-        # Compute array factor
-        theta = np.linspace(-np.pi, np.pi, 1000)  # Limit to -90 to 90 degrees
+        # Get element positions
+        x_positions, y_positions = self.get_element_positions()
         
-        # Compute phase shifts for beam steering
-        d = self.element_spacing / self.wavelength  # Normalized spacing
-        Nr = self.num_elements
-        X = np.ones((Nr, len(theta)), dtype=complex)
-
-        # positions = np.arange(-(self.num_elements - 1) / 2, (self.num_elements) / 2) * d
-
+        # Convert beam steering angle to radians
         steering_angle = np.deg2rad(self.beam_angle)
         
-        # Beam steering phase shift
-        # steering_phase = k * d * np.sin(np.deg2rad(self.beam_angle))
-        
-        # progressive_phase = k * d * np.sin(steering_angle)
-
-        # Array factor computation
+        # Initialize results array
         results = np.zeros_like(theta)
-        for i, theta_i in enumerate(theta):
-            # Phase shift per element
-            w = np.exp(-2j * np.pi * d * np.arange(Nr) * (np.sin(theta_i) - np.sin(steering_angle)))
+        
+        # Compute contribution from each element
+        for angle_idx, view_angle in enumerate(theta):
+            # For each viewing angle, compute the phase difference from each element
+            total_field = 0
             
-            # Apply weights to received signals
-            X_weighted = w.conj().T @ X[:, i]
+            # Reference point for phase calculation (could be center of array)
+            x_ref = 0
+            y_ref = 0 if self.array_type == 'linear' else self.curvature_radius
             
-            # Calculate power in dB
-            results[i] = 10 * np.log10(np.abs(X_weighted) ** 2)
+            for x_pos, y_pos in zip(x_positions, y_positions):
+                # Compute path length difference
+                if self.array_type == 'linear':
+                    # For linear array
+                    path_diff = x_pos * (np.sin(view_angle) - np.sin(steering_angle))
+                else:
+                    # For curved array
+                    # Calculate path difference considering curved geometry
+                    dx = x_pos - x_ref
+                    dy = y_pos - y_ref
+                    path_diff = (dx * np.sin(view_angle) + dy * np.cos(view_angle) - 
+                               (dx * np.sin(steering_angle) + dy * np.cos(steering_angle)))
+                
+                # Compute phase
+                phase = 2 * np.pi * path_diff / self.wavelength
+                
+                # Add contribution from this element
+                total_field += np.exp(1j * phase)
+            
+            # Store magnitude of total field
+            results[angle_idx] = np.abs(total_field)
         
-        # Normalize results
-        results -= np.max(results)
+        # Normalize and convert to dB
+        results = 20 * np.log10(results / np.max(results))
         
-        # Convert theta to degrees for plotting
-        theta_deg = np.rad2deg(theta)
-        
-        # Filter out values below -60 dB for cleaner visualization
+        # Filter out values below -60 dB
         results = np.maximum(results, -60)
         
         # Convert to linear scale for magnitude plot
         magnitude = 1 + (results / 60)  # Scale to 0-1 range
         
         return {
-            'x': theta_deg,
+            'x': np.rad2deg(theta),
             'y': magnitude
         }
 
     def compute_interference_map(self):
-        # Define the grid for X and Y positions
-        x = np.linspace(0, 5, 250)  # Adjust grid size and range as needed
-        y = np.linspace(-5, 5, 500)
+        # Define the grid with appropriate range to show main lobe
+        x = np.linspace(0, 20, 400)  # Increased range in x direction
+        y = np.linspace(-10, 10, 400)
         X, Y = np.meshgrid(x, y)
         
         # Wave parameters
-        k = 2 * np.pi / self.wavelength  # Wavenumber
-        d = self.element_spacing         # Element spacing
-
-        # Array of sources positioned linearly along the x-axis
-        sources_x = np.linspace(-self.num_elements * d / 2, 
-                                self.num_elements * d / 2, 
-                                self.num_elements)
-        sources_y = np.zeros_like(sources_x)  # All sources lie on y=0
-
-        # Calculate the interference pattern
-        interference = np.zeros_like(X)
-        for sx, sy in zip(sources_x, sources_y):
-            # Distance from source to every point on the grid
-            r = np.sqrt((X - sx)**2 + (Y - sy)**2)
-            # Add wave contributions (sine wave) from each source
-            interference += np.sin(k * r)
+        k = 2 * np.pi / self.wavelength
         
-        # Normalize the pattern for better visualization
-        interference_normalized = np.sin(interference)
+        # Calculate array element positions
+        num_elements = self.num_elements
+        d = self.element_spacing
+        element_positions = np.linspace(-((num_elements-1)/2)*d, ((num_elements-1)/2)*d, num_elements)
         
-        #  # Create a mask for 0° to 180° (positive Y-axis)
-        # angles = np.arctan2(X, Y)  # Compute angles in radians
-        # mask = (angles >= 0) & (angles <= np.pi)  # Mask for 180° to 360 (0 to π radians)
+        # Calculate steering phase shifts
+        steering_angle_rad = np.deg2rad(self.beam_angle)
+        phase_shifts = k * element_positions * np.sin(steering_angle_rad)
         
-        # # mask = angles < 0
-        # # Apply the mask
-        # interference_normalized[~mask] = np.nan  # Set values outside the range to NaN
-
-
+        # Initialize field
+        field = np.zeros_like(X, dtype=complex)
+        
+        # Calculate field from each element
+        for pos, phase_shift in zip(element_positions, phase_shifts):
+            # Calculate distances from this element to all points
+            distances = np.sqrt((X)**2 + (Y - pos)**2)
+            
+            # Add contribution from this element with phase shift
+            # Removed the 1/sqrt(r) decay to better show the main lobe
+            field += np.exp(1j * (k * distances + phase_shift))
+        
+        # Calculate intensity
+        intensity = np.abs(field)**2
+        
+        # Log scale normalization to better show the pattern
+        intensity = np.log10(intensity + 1)  # Add 1 to avoid log(0)
+        intensity = intensity / np.max(intensity)
+        
         return {
             'X': X,
             'Y': Y,
-            'interference': interference_normalized
+            'interference': intensity
         }
