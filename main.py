@@ -50,42 +50,42 @@ class BeamformingApp(QMainWindow):
         array_layout.addWidget(QLabel('Number of Elements:'), 0, 0)
         array_layout.addWidget(self.num_elements_spin, 0, 1)
 
-        # Frequency Control
-        # self.frequency_spin = QDoubleSpinBox()
-        # self.frequency_spin.setRange(1e6, 100e9)  # 1 MHz to 100 GHz
-        # self.frequency_spin.setValue(2.4e9)  # Default to 2.4 GHz
-        # self.frequency_spin.setSingleStep(1e6)  # Step by 1 MHz
-        # self.frequency_spin.setDecimals(1)
-        # self.frequency_spin.valueChanged.connect(self.update_frequency)
-
-        # # Add frequency unit selector
-        # self.frequency_unit = QComboBox()
-        # self.frequency_unit.addItems(['Hz', 'kHz', 'MHz', 'GHz'])
-        # self.frequency_unit.setCurrentText('GHz')
-        # self.frequency_unit.currentTextChanged.connect(self.update_frequency_display)
-
-        # freq_layout = QHBoxLayout()
-        # freq_layout.addWidget(self.frequency_spin)
-        # freq_layout.addWidget(self.frequency_unit)
-        
-        # array_layout.addWidget(QLabel('Frequency:'), 1, 0)
-        # array_layout.addLayout(freq_layout, 1, 1)
-
         # Element Spacing
         self.element_spacing_spin = QDoubleSpinBox()
         self.element_spacing_spin.setRange(0.1, 10)
-        self.element_spacing_spin.setValue(1.0)
+        self.element_spacing_spin.setValue(0.5)
         self.element_spacing_spin.setSingleStep(0.1)
         self.element_spacing_spin.valueChanged.connect(self.update_element_spacing)
         array_layout.addWidget(QLabel('Element Spacing (λ):'), 1, 0)
         array_layout.addWidget(self.element_spacing_spin, 1, 1)
 
+        # Frequency Control
+        self.frequency_spin = QDoubleSpinBox()
+        self.frequency_spin.setRange(1, 100)  
+        self.frequency_spin.setValue(2.4)  
+        self.frequency_spin.setSingleStep(1)  
+        self.frequency_spin.setDecimals(1)
+        self.frequency_spin.valueChanged.connect(self.update_frequency)
+
+        # Add frequency unit selector
+        self.frequency_unit = QComboBox()
+        self.frequency_unit.addItems(['Hz', 'kHz', 'MHz', 'GHz'])
+        self.frequency_unit.setCurrentText('GHz')
+        self.frequency_unit.currentTextChanged.connect(self.update_frequency)
+
+        freq_layout = QHBoxLayout()
+        freq_layout.addWidget(self.frequency_spin)
+        freq_layout.addWidget(self.frequency_unit)
+        
+        array_layout.addWidget(QLabel('Frequency:'), 2, 0)
+        array_layout.addLayout(freq_layout, 2, 1)
+
         # Array Geometry
         self.array_type_combo = QComboBox()
         self.array_type_combo.addItems(['Linear', 'Curved'])
         self.array_type_combo.currentIndexChanged.connect(self.update_array_geometry)
-        array_layout.addWidget(QLabel('Array Geometry:'), 2, 0)
-        array_layout.addWidget(self.array_type_combo, 2, 1)
+        array_layout.addWidget(QLabel('Array Geometry:'), 3, 0)
+        array_layout.addWidget(self.array_type_combo, 3, 1)
 
         self.curvature_radius_spin = QDoubleSpinBox()
         self.curvature_radius_spin.setRange(1, 50)
@@ -93,8 +93,8 @@ class BeamformingApp(QMainWindow):
         self.curvature_radius_spin.setSingleStep(0.5)
         self.curvature_radius_spin.valueChanged.connect(self.update_array_visualization)
         self.radius_label = QLabel('Curvature Radius:')
-        array_layout.addWidget(self.radius_label, 3, 0)
-        array_layout.addWidget(self.curvature_radius_spin, 3, 1)
+        array_layout.addWidget(self.radius_label, 4, 0)
+        array_layout.addWidget(self.curvature_radius_spin, 4, 1)
 
         # Make curvature radius control visible only for curved array
         self.radius_label.setVisible(False)
@@ -238,14 +238,13 @@ class BeamformingApp(QMainWindow):
         self.update_visualization()
 
     def update_element_spacing(self):
-        self.simulator.element_spacing = self.element_spacing_spin.value()
+        self.simulator.element_spacing = self.element_spacing_spin.value() * self.simulator.wavelength
         self.update_array_visualization()
         self.update_visualization()
 
     def update_array_geometry(self):
         # Update simulator with array geometry type
-        geometry_type = self.array_type_combo.currentText()
-        
+        geometry_type = self.array_type_combo.currentText()        
         # Update simulator's array geometry 
         # You might want to pass this information to the simulator if needed
         if geometry_type == 'Linear':
@@ -258,45 +257,39 @@ class BeamformingApp(QMainWindow):
         self.update_array_visualization()
         self.update_visualization()
 
-    # def update_frequency(self):
-    #     # Get the frequency value and convert based on selected unit
-    #     value = self.frequency_spin.value()
-    #     unit = self.frequency_unit.currentText()
+    def update_frequency(self):
+        # Get the frequency value and convert based on selected unit
+        value = self.frequency_spin.value()
+        unit = self.frequency_unit.currentText()
         
-    #     # Convert to Hz based on selected unit
-    #     conversion = {
-    #         'Hz': 1,
-    #         'kHz': 1e3,
-    #         'MHz': 1e6,
-    #         'GHz': 1e9
-    #     }
+        # Convert to Hz based on selected unit
+        conversion = {
+            'Hz': 1,
+            'kHz': 1e3,
+            'MHz': 1e6,
+            'GHz': 1e9
+        }
         
-    #     frequency_hz = value * conversion[unit]
-    #     self.simulator.frequency = frequency_hz
-    #     # Update wavelength and element spacing
-    #     self.simulator.wavelength = 3e8 / frequency_hz
-    #     self.simulator.element_spacing = self.simulator.wavelength / 2
+        frequency = value * conversion[unit]
+        self.simulator.frequency = frequency
+        # Update wavelength and element spacing
+        self.simulator.wavelength = 3e8 / frequency
+        # self.simulator.element_spacing = self.simulator.wavelength / 2
+        self.update_array_visualization()
+        self.update_visualization()
         
-    #     self.update_array_visualization()
-    #     self.update_visualization()
     
     # def update_frequency_display(self):
-    #     # Get current frequency in Hz
-    #     current_freq = self.simulator.frequency
+        # Get current frequency in Hz
+        # current_freq = self.simulator.frequency
         
-    #     # Convert to selected unit
-    #     unit = self.frequency_unit.currentText()
-    #     conversion = {
-    #         'Hz': 1,
-    #         'kHz': 1e-3,
-    #         'MHz': 1e-6,
-    #         'GHz': 1e-9
-    #     }
+        # Convert to selected unit
+        # unit = self.frequency_unit.currentText()
         
-    #     # Update spin box value without triggering valueChanged
-    #     self.frequency_spin.blockSignals(True)
-    #     self.frequency_spin.setValue(current_freq * conversion[unit])
-    #     self.frequency_spin.blockSignals(False)
+        # Update spin box value without triggering valueChanged
+        # self.frequency_spin.blockSignals(True)
+        # self.frequency_spin.setValue(current_freq)
+        # self.frequency_spin.blockSignals(False)
 
 
     def load_scenario(self, index):
