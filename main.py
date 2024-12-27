@@ -45,7 +45,7 @@ class BeamformingApp(QMainWindow):
         # Number of Elements
         self.num_elements_spin = QSpinBox()
         self.num_elements_spin.setRange(2, 256)
-        self.num_elements_spin.setValue(16)
+        self.num_elements_spin.setValue(8)
         self.num_elements_spin.valueChanged.connect(self.update_array_elements)
         array_layout.addWidget(QLabel('Number of Elements:'), 0, 0)
         array_layout.addWidget(self.num_elements_spin, 0, 1)
@@ -61,7 +61,7 @@ class BeamformingApp(QMainWindow):
 
         # Frequency Control
         self.frequency_spin = QDoubleSpinBox()
-        self.frequency_spin.setRange(1, 100)  
+        self.frequency_spin.setRange(0.1, 100)
         self.frequency_spin.setValue(2.4)  
         self.frequency_spin.setSingleStep(1)  
         self.frequency_spin.setDecimals(1)
@@ -87,19 +87,19 @@ class BeamformingApp(QMainWindow):
         array_layout.addWidget(QLabel('Array Geometry:'), 3, 0)
         array_layout.addWidget(self.array_type_combo, 3, 1)
 
-        self.curvature_radius_spin = QDoubleSpinBox()
-        self.curvature_radius_spin.setRange(1, 50)
-        self.curvature_radius_spin.setValue(10)
-        self.curvature_radius_spin.setSingleStep(0.5)
-        self.curvature_radius_spin.valueChanged.connect(self.update_array_visualization)
-        self.radius_label = QLabel('Curvature Radius:')
-        array_layout.addWidget(self.radius_label, 4, 0)
-        array_layout.addWidget(self.curvature_radius_spin, 4, 1)
+        # self.curvature_radius_spin = QDoubleSpinBox()
+        # self.curvature_radius_spin.setRange(1, 50)
+        # self.curvature_radius_spin.setValue(10)
+        # self.curvature_radius_spin.setSingleStep(0.5)
+        # self.curvature_radius_spin.valueChanged.connect(self.update_array_visualization)
+        # self.radius_label = QLabel('Curvature Radius:')
+        # array_layout.addWidget(self.radius_label, 4, 0)
+        # array_layout.addWidget(self.curvature_radius_spin, 4, 1)
 
         # Make curvature radius control visible only for curved array
-        self.radius_label.setVisible(False)
-        self.curvature_radius_spin.setVisible(False)
-        self.array_type_combo.currentIndexChanged.connect(self.toggle_curvature_control)
+        # self.radius_label.setVisible(False)
+        # self.curvature_radius_spin.setVisible(False)
+        # self.array_type_combo.currentIndexChanged.connect(self.toggle_curvature_control)
         
         array_group.setLayout(array_layout)
         param_layout.addWidget(array_group)
@@ -175,17 +175,6 @@ class BeamformingApp(QMainWindow):
         self.simulator = BeamformingSimulator()
         self.scenario_manager = ScenarioManager()
 
-        # Initial visualization update
-        self.update_array_visualization()
-        
-        
-
-    def toggle_curvature_control(self):
-        # Show/hide curvature radius control based on array type
-        is_curved = self.array_type_combo.currentText() == 'Curved'
-        self.radius_label.setVisible(is_curved)
-        self.curvature_radius_spin.setVisible(is_curved)
-
     def update_array_visualization(self):
         # Clear previous visualization
         self.array_view.clear()
@@ -203,11 +192,12 @@ class BeamformingApp(QMainWindow):
             y_positions = np.zeros_like(x_positions)
         else:
             # Curved array
-            curvature_radius = self.curvature_radius_spin.value()
+            # curvature_radius = self.curvature_radius_spin.value()
+            curvature_radius = (num_elements - 1) * element_spacing / np.pi
             
             # Distribute elements along an arc
-            arc_angle = np.pi  # Full semicircle, can be made configurable
-            theta = np.linspace(0, arc_angle, num_elements)
+            arc_angle = - np.pi  # Full semicircle, can be made configurable
+            theta = np.linspace(arc_angle, 0, num_elements)
             
             x_positions = curvature_radius * np.cos(theta)
             y_positions = curvature_radius * np.sin(theta)
@@ -219,27 +209,15 @@ class BeamformingApp(QMainWindow):
                                      brush='red')
         self.array_view.addItem(scatter)
 
-        # max_radius = 5  # This can be adjusted to fit the beam's spread or array parameters
-        # num_circles = 4  # Number of concentric circles for each transducer
-        # geometry_type = self.array_type_combo.currentText()
-        # for i in range(num_elements):
-        #     for j in range(1, num_circles + 1):
-        #         radius = max_radius * j / num_circles
-        #         circle_theta = np.linspace(0, 2*np.pi if geometry_type == 'Curved' else np.pi, 180)  
-        #         circle_x = x_positions[i] + radius * np.cos(circle_theta)
-        #         circle_y = y_positions[i] + radius * np.sin(circle_theta)
-        #         self.array_view.plot(circle_x, circle_y, pen=pg.mkPen(color='gray', style=Qt.DashLine))
         self.array_view.setLabel('bottom', 'X Position', units='λ')
         self.array_view.setLabel('left', 'Y Position', units='λ')
 
     def update_array_elements(self):
-        self.simulator.num_elements = self.num_elements_spin.value()
-        self.update_array_visualization()
+        self.simulator.num_elements = self.num_elements_spin.value()        
         self.update_visualization()
 
     def update_element_spacing(self):
-        self.simulator.element_spacing = self.element_spacing_spin.value() * self.simulator.wavelength
-        self.update_array_visualization()
+        self.simulator.element_spacing = self.element_spacing_spin.value() * self.simulator.wavelength        
         self.update_visualization()
 
     def update_array_geometry(self):
@@ -252,9 +230,8 @@ class BeamformingApp(QMainWindow):
         else:
             self.simulator.array_type = 'curved'
             # Set curvature radius in the simulator if supported
-            self.simulator.curvature_radius = self.curvature_radius_spin.value()
-
-        self.update_array_visualization()
+            self.simulator.curvature_radius = (self.num_elements_spin.value() - 1) * self.element_spacing_spin.value() / np.pi
+        
         self.update_visualization()
 
     def update_frequency(self):
@@ -274,8 +251,7 @@ class BeamformingApp(QMainWindow):
         self.simulator.frequency = frequency
         # Update wavelength and element spacing
         self.simulator.wavelength = 3e8 / frequency
-        # self.simulator.element_spacing = self.simulator.wavelength / 2
-        self.update_array_visualization()
+        self.simulator.element_spacing = self.simulator.wavelength / 2        
         self.update_visualization()
         
     def load_scenario(self, index):
@@ -285,12 +261,12 @@ class BeamformingApp(QMainWindow):
         if scenario_data:
             # Update UI elements with scenario parameters
             self.num_elements_spin.setValue(scenario_data['num_elements'])
-            
+            print(self.simulator.num_elements)
             # Update frequency control
             frequency = scenario_data['frequency']
             # 
             array_type = scenario_data['array_type']
-            print(array_type, type(array_type))
+
             # Update simulator with array geometry type
             self.array_type_combo.setCurrentText(array_type)
             self.update_array_geometry()
@@ -309,6 +285,7 @@ class BeamformingApp(QMainWindow):
                 self.frequency_spin.setValue(frequency)
             
             self.simulator.frequency = frequency
+            self.update_frequency()
             
             self.update_visualization()
 
@@ -375,15 +352,9 @@ class BeamformingApp(QMainWindow):
         self.update_visualization()
 
     def update_visualization(self):
+        self.update_array_visualization()
         # Update beam profile
         beam_profile = self.simulator.compute_beam_profile()
-
-        # # Clear previous plots
-        # self.beam_profile_view.clear()
-        # self.interference_view.clear()
-
-        # Plot beam profile
-        # self.beam_profile_view.plot(beam_profile['x'], beam_profile['y'], pen=pg.mkPen(color='b', width=3))
         self.plot_beam_profile(beam_profile)
 
         # Compute interference map
@@ -399,7 +370,7 @@ class BeamformingApp(QMainWindow):
 
         # Add color palette and display interference map
         img_item = pg.ImageItem(normalized_map)
-        colormap = pg.colormap.get('plasma')  # Change to 'viridis', 'inferno', etc., if desired
+        colormap = pg.colormap.get('viridis')  # Change to 'viridis', 'inferno', etc., if desired
         img_item.setLookupTable(colormap.getLookupTable())
         img_item.setLevels([0, 1])  # Set normalized levels
 

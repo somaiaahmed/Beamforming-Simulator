@@ -5,7 +5,7 @@ class BeamformingSimulator:
     def __init__(self):
         # Default parameters
         self.num_elements = 16
-        self.frequency = 1e9  # 2.4 GHz default
+        self.frequency = 2.4e9  # 2.4 GHz default
         self.wavelength = 3e8 / self.frequency
         self.element_spacing = self.wavelength / 2
         self.beam_angle = 0
