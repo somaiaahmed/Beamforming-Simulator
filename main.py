@@ -7,7 +7,19 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout
 from PyQt5.QtCore import Qt
 import pyqtgraph as pg
 from PyQt5.QtGui import QIcon, QColor
+import numpy as np
+import matplotlib.pyplot as plt
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, 
+                             QTabWidget, QSlider, QLabel, QComboBox, QPushButton, 
+                             QSpinBox, QGridLayout, QGroupBox, QDoubleSpinBox)
+from PyQt5.QtCore import Qt
+import pyqtgraph as pg
+from PyQt5.QtGui import QIcon, QColor
 
+from beam_simulator import BeamformingSimulator
+from scenario_manager import ScenarioManager
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 from beam_simulator import BeamformingSimulator
 from scenario_manager import ScenarioManager
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -19,7 +31,11 @@ class BeamformingApp(QMainWindow):
         self.setWindowTitle('Beamforming Simulator')
         self.setWindowIcon(QIcon("imgs/logo.png"))
         self.setGeometry(100, 100, 1400, 800)
+        self.setWindowTitle('Beamforming Simulator')
+        self.setWindowIcon(QIcon("imgs/logo.png"))
+        self.setGeometry(100, 100, 1400, 800)
 
+        # Central widget and main layout
         # Central widget and main layout
         central_widget = QWidget()
         main_layout = QHBoxLayout()
@@ -385,7 +401,14 @@ def main():
         app.setStyleSheet(file.read())
     beamforming_app = BeamformingApp()
     beamforming_app.show()
+    with open("style.qss", "r") as file:
+        app.setStyleSheet(file.read())
+    beamforming_app = BeamformingApp()
+    beamforming_app.show()
     sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    main()
 
 if __name__ == '__main__':
     main()
