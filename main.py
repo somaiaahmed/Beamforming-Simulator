@@ -219,16 +219,16 @@ class BeamformingApp(QMainWindow):
                                      brush='red')
         self.array_view.addItem(scatter)
 
-        max_radius = 5  # This can be adjusted to fit the beam's spread or array parameters
-        num_circles = 4  # Number of concentric circles for each transducer
-        geometry_type = self.array_type_combo.currentText()
-        for i in range(num_elements):
-            for j in range(1, num_circles + 1):
-                radius = max_radius * j / num_circles
-                circle_theta = np.linspace(0, 2*np.pi if geometry_type == 'Curved' else np.pi, 180)  
-                circle_x = x_positions[i] + radius * np.cos(circle_theta)
-                circle_y = y_positions[i] + radius * np.sin(circle_theta)
-                self.array_view.plot(circle_x, circle_y, pen=pg.mkPen(color='gray', style=Qt.DashLine))
+        # max_radius = 5  # This can be adjusted to fit the beam's spread or array parameters
+        # num_circles = 4  # Number of concentric circles for each transducer
+        # geometry_type = self.array_type_combo.currentText()
+        # for i in range(num_elements):
+        #     for j in range(1, num_circles + 1):
+        #         radius = max_radius * j / num_circles
+        #         circle_theta = np.linspace(0, 2*np.pi if geometry_type == 'Curved' else np.pi, 180)  
+        #         circle_x = x_positions[i] + radius * np.cos(circle_theta)
+        #         circle_y = y_positions[i] + radius * np.sin(circle_theta)
+        #         self.array_view.plot(circle_x, circle_y, pen=pg.mkPen(color='gray', style=Qt.DashLine))
         self.array_view.setLabel('bottom', 'X Position', units='λ')
         self.array_view.setLabel('left', 'Y Position', units='λ')
 
@@ -278,20 +278,6 @@ class BeamformingApp(QMainWindow):
         self.update_array_visualization()
         self.update_visualization()
         
-    
-    # def update_frequency_display(self):
-        # Get current frequency in Hz
-        # current_freq = self.simulator.frequency
-        
-        # Convert to selected unit
-        # unit = self.frequency_unit.currentText()
-        
-        # Update spin box value without triggering valueChanged
-        # self.frequency_spin.blockSignals(True)
-        # self.frequency_spin.setValue(current_freq)
-        # self.frequency_spin.blockSignals(False)
-
-
     def load_scenario(self, index):
         scenario = self.scenario_combo.currentText()
         scenario_data = self.scenario_manager.load_scenario(scenario)
@@ -299,56 +285,33 @@ class BeamformingApp(QMainWindow):
         if scenario_data:
             # Update UI elements with scenario parameters
             self.num_elements_spin.setValue(scenario_data['num_elements'])
-            self.simulator.frequency = scenario_data['frequency']
             
-            # You might want to add more parameter updates here
-
-        self.update_visualization()
-        
-    # def load_scenario(self, index):
-    #     scenario = self.scenario_combo.currentText()
-    #     scenario_data = self.scenario_manager.load_scenario(scenario)
-        
-    #     if scenario_data:
-    #         # Update UI elements with scenario parameters
-    #         self.num_elements_spin.setValue(scenario_data['num_elements'])
+            # Update frequency control
+            frequency = scenario_data['frequency']
+            # 
+            array_type = scenario_data['array_type']
+            print(array_type, type(array_type))
+            # Update simulator with array geometry type
+            self.array_type_combo.setCurrentText(array_type)
+            self.update_array_geometry()
+            # Determine best unit for display
+            if frequency >= 1e9:
+                self.frequency_unit.setCurrentText('GHz')
+                self.frequency_spin.setValue(frequency / 1e9)
+            elif frequency >= 1e6:
+                self.frequency_unit.setCurrentText('MHz')
+                self.frequency_spin.setValue(frequency / 1e6)
+            elif frequency >= 1e3:
+                self.frequency_unit.setCurrentText('kHz')
+                self.frequency_spin.setValue(frequency / 1e3)
+            else:
+                self.frequency_unit.setCurrentText('Hz')
+                self.frequency_spin.setValue(frequency)
             
-    #         # Update frequency control
-    #         frequency = scenario_data['frequency']
-    #         # Determine best unit for display
-    #         if frequency >= 1e9:
-    #             self.frequency_unit.setCurrentText('GHz')
-    #             self.frequency_spin.setValue(frequency / 1e9)
-    #         elif frequency >= 1e6:
-    #             self.frequency_unit.setCurrentText('MHz')
-    #             self.frequency_spin.setValue(frequency / 1e6)
-    #         elif frequency >= 1e3:
-    #             self.frequency_unit.setCurrentText('kHz')
-    #             self.frequency_spin.setValue(frequency / 1e3)
-    #         else:
-    #             self.frequency_unit.setCurrentText('Hz')
-    #             self.frequency_spin.setValue(frequency)
+            self.simulator.frequency = frequency
             
-    #         self.simulator.frequency = frequency
-            
-    #     self.update_visualization()
+            self.update_visualization()
 
-    # def plot_beam_profile(self, beam_profile):
-    #     # Clear the previous plot
-    #     self.beam_profile_view.clear()
-
-    #     # Convert polar data to Cartesian
-    #     theta = np.deg2rad(beam_profile['x'])  # Convert degrees to radians
-    #     r = beam_profile['y']
-    #     x = r * np.cos(theta)
-    #     y = r * np.sin(theta)
-
-    #     # Plot the Cartesian data
-    #     self.beam_profile_view.plot(y, x, pen=pg.mkPen(color='cyan', width=2))
-
-    #     # Lock aspect ratio to make it circular
-    #     self.beam_profile_view.setAspectLocked(True)
-    
     def plot_beam_profile(self, beam_profile):
         # Clear the previous plot
         self.beam_profile_view.clear()
@@ -405,11 +368,6 @@ class BeamformingApp(QMainWindow):
         # Set axis labels for Cartesian reference
         self.beam_profile_view.setLabel('bottom', 'X Position (Horizontal)')
         self.beam_profile_view.setLabel('left', 'Y Position (Vertical)')
-
-
-
-
-
 
     def update_beam_angle(self, angle):
         self.beam_angle_label.setText(f'Beam Angle: {angle} degrees')
