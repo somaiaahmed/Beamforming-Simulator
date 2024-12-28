@@ -309,27 +309,27 @@ class BeamformingApp(QMainWindow):
         # Clear the previous plot
         self.beam_profile_view.clear()
 
-        # Convert polar data to Cartesian coordinates for the upper half (-90° to 90°)
+        # Convert polar data to Cartesian coordinates
         theta = np.deg2rad(beam_profile['x'])  # Convert degrees to radians
-        mask = (theta >= -np.pi) & (theta <= np.pi)  # Only upper half (-90° to 90°)
+        mask = (theta >= -np.pi) & (theta <= np.pi)
         theta = theta[mask]
         r = beam_profile['y'][mask]
+        
+        # Convert to Cartesian coordinates
+        # Note: We're not applying any artificial rotation here
+        # The steering is already handled in the beam_profile computation
         x = r * np.cos(theta)
         y = r * np.sin(theta)
-        
-        phase_shift = np.deg2rad(self.simulator.beam_angle)
-        x_shifted = x * np.cos(phase_shift) - y * np.sin(phase_shift)
-        y_shifted = x * np.sin(phase_shift) + y * np.cos(phase_shift)
 
         # Plot the beam profile
-        self.beam_profile_view.plot(y_shifted, x_shifted, pen=pg.mkPen(color='cyan', width=2))
+        self.beam_profile_view.plot(y, x, pen=pg.mkPen(color='cyan', width=2))
 
         # Add polar grid for -90° to 90°
-        max_radius = max(r)  # Determine the maximum radius for the grid
-        num_circles = 5      # Number of concentric circles
-        num_angles = 7       # Number of angle lines (e.g., every 30° from -90° to 90°)
+        max_radius = max(r)
+        num_circles = 5
+        num_angles = 7
 
-        # Add concentric circles (upper half only)
+        # Add concentric circles
         for i in range(1, num_circles + 1):
             radius = max_radius * i / num_circles
             circle_theta = np.linspace(-np.pi, np.pi, 360)
@@ -337,7 +337,7 @@ class BeamformingApp(QMainWindow):
             circle_y = radius * np.sin(circle_theta)
             self.beam_profile_view.plot(circle_y, circle_x, pen=pg.mkPen(color='gray', style=Qt.DashLine))
 
-        # Add radial lines (angle lines for -90° to 90°)
+        # Add radial lines
         angles = np.linspace(-np.pi, np.pi, num_angles)
         for angle in angles:
             line_x = [0, max_radius * np.cos(angle)]
@@ -352,13 +352,11 @@ class BeamformingApp(QMainWindow):
             angle_deg = int(np.rad2deg(angle))
             label = pg.TextItem(f"{angle_deg}°", anchor=(0.5, 0.5), color="white")
             label.setFont(font)
-            label.setPos(label_y, label_x)  # Notice the swap for y, x to match the rotation
+            label.setPos(label_y, label_x)
             self.beam_profile_view.addItem(label)
 
-        # Lock the aspect ratio to ensure the plot is circular
+        # Lock the aspect ratio and set labels
         self.beam_profile_view.setAspectLocked(True)
-
-        # Set axis labels for Cartesian reference
         self.beam_profile_view.setLabel('bottom', 'X Position (Horizontal)')
         self.beam_profile_view.setLabel('left', 'Y Position (Vertical)')
 
