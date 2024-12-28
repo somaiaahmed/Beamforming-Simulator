@@ -401,14 +401,7 @@ def main():
         app.setStyleSheet(file.read())
     beamforming_app = BeamformingApp()
     beamforming_app.show()
-    with open("style.qss", "r") as file:
-        app.setStyleSheet(file.read())
-    beamforming_app = BeamformingApp()
-    beamforming_app.show()
     sys.exit(app.exec_())
-
-if __name__ == '__main__':
-    main()
 
 if __name__ == '__main__':
     main()

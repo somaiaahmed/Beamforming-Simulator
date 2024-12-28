@@ -17,17 +17,22 @@ class BeamformingSimulator:
     def get_element_positions(self):
         if self.array_type == 'linear':
             # Linear array positions
-            x = np.arange(-(self.num_elements - 1) / 2, (self.num_elements) / 2) * self.element_spacing
-            y = np.zeros_like(x)
-            return x, y
+            x_positions = np.arange(-(self.num_elements - 1) / 2, (self.num_elements) / 2) * self.element_spacing
+            y_positions = np.zeros_like(x_positions)
         else:
             # Curved array positions
-            arc_length = (self.num_elements - 1) * self.element_spacing
-            angular_span = arc_length / self.curvature_radius
-            angles = np.linspace(-angular_span/2, angular_span/2, self.num_elements)
-            x = self.curvature_radius * np.sin(angles)
-            y = self.curvature_radius * (1 - np.cos(angles))
-            return x, y
+            # arc_length = (self.num_elements - 1) * self.element_spacing
+            # angular_span = arc_length / self.curvature_radius
+            # angles = np.linspace(-angular_span/2, angular_span/2, self.num_elements)
+            # x = self.curvature_radius * np.sin(angles)
+            # y = self.curvature_radius * (1 - np.cos(angles))
+            curvature_radius = (self.num_elements - 1) * self.element_spacing / np.pi
+            arc_angle = - np.pi  
+            theta = np.linspace(arc_angle, 0, self.num_elements)
+            
+            x_positions = curvature_radius * np.cos(theta)
+            y_positions = curvature_radius * np.sin(theta)
+        return x_positions, y_positions
 
     def compute_beam_profile(self):
         # Compute viewing angles
@@ -48,8 +53,8 @@ class BeamformingSimulator:
             total_field = 0
             
             # Reference point for phase calculation (could be center of array)
-            x_ref = 0
-            y_ref = 0 if self.array_type == 'linear' else self.curvature_radius
+            # x_ref = 0
+            # y_ref = 0 if self.array_type == 'linear' else self.curvature_radius
             
             for x_pos, y_pos in zip(x_positions, y_positions):
                 # Compute path length difference
@@ -59,8 +64,8 @@ class BeamformingSimulator:
                 else:
                     # For curved array
                     # Calculate path difference considering curved geometry
-                    dx = x_pos - x_ref
-                    dy = y_pos - y_ref
+                    dx = x_pos
+                    dy = y_pos - self.curvature_radius
                     path_diff = (dx * np.sin(view_angle) + dy * np.cos(view_angle) - 
                                (dx * np.sin(steering_angle) + dy * np.cos(steering_angle)))
                 
@@ -89,37 +94,60 @@ class BeamformingSimulator:
 
     def compute_interference_map(self):
         # Define the grid with appropriate range to show main lobe
-        x = np.linspace(0, 20, 400)  # Increased range in x direction
-        y = np.linspace(-10, 10, 400)
+        x = np.linspace(-20, 20, 400)  # Increased range in x direction
+        y = np.linspace(-20, 20, 400)
         X, Y = np.meshgrid(x, y)
         
         # Wave parameters
         k = 2 * np.pi / self.wavelength
         
-        # Calculate array element positions
-        num_elements = self.num_elements
-        d = self.element_spacing
-        element_positions = np.linspace(-((num_elements-1)/2)*d, ((num_elements-1)/2)*d, num_elements)
+        # Get element positions based on array type
+        if self.array_type == 'linear':
+            # Linear array positions
+            num_elements = self.num_elements
+            d = self.element_spacing
+            y_positions = np.linspace(-((num_elements-1)/2)*d, ((num_elements-1)/2)*d, num_elements)
+            x_positions = np.zeros_like(y_positions)
+        else:
+            # Curved array positions - elements distributed uniformly on circle
+            angles = np.linspace(0, 2 * np.pi, self.num_elements, endpoint=False)
+            x_positions = self.curvature_radius * np.cos(angles)
+            y_positions = self.curvature_radius * np.sin(angles)
         
         # Calculate steering phase shifts
         steering_angle_rad = np.deg2rad(self.beam_angle)
-        phase_shifts = k * element_positions * np.sin(steering_angle_rad)
+        # phase_shifts = k * element_positions * np.sin(steering_angle_rad)
         
         # Initialize field
         field = np.zeros_like(X, dtype=complex)
         
+        # For curved array, calculate center of the circle as reference
+        x_center = 0
+        y_center = 0
+        
         # Calculate field from each element
-        for pos, phase_shift in zip(element_positions, phase_shifts):
+        for x_pos, y_pos in zip(x_positions, y_positions):
             # Calculate distances from this element to all points
-            distances = np.sqrt((X)**2 + (Y - pos)**2)
+            distances = np.sqrt((X - x_pos)**2 + (Y - y_pos)**2)
+            
+            if self.array_type == 'linear':
+                # Linear array phase calculation
+                phase_shift = k * y_pos * np.sin(steering_angle_rad)
+            else:
+                # Curved array phase calculation
+                # Calculate the angle of the element relative to center
+                element_angle = np.arctan2(y_pos - y_center, x_pos - x_center)
+                
+                # Calculate phase shift based on steering angle and element position
+                phase_shift = k * self.curvature_radius * np.cos(element_angle - steering_angle_rad)
             
             # Add contribution from this element with phase shift
-            # Removed the 1/sqrt(r) decay to better show the main lobe
             field += np.exp(1j * (k * distances + phase_shift))
         
         # Calculate intensity
         intensity = np.abs(field)**2
-        
+        # Normalize the intensity
+        intensity = intensity / np.max(intensity)
         # Log scale normalization to better show the pattern
         intensity = np.log10(intensity + 1)  # Add 1 to avoid log(0)
         intensity = intensity / np.max(intensity)
