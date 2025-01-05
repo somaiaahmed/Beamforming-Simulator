@@ -6,6 +6,7 @@ Beamforming is a cornerstone of many modern technologies, including wireless com
 
 This project is a **2D Beamforming Simulator** designed to provide users with a hands-on experience in customizing and visualizing beamforming configurations. The simulator enables real-time interaction with system parameters, phased array geometries, and multiple phased array units.
 
+![beamforming](imgs/beamforming.png)
 ---
 
 ## Features
@@ -16,9 +17,14 @@ Users can steer the beam direction by customizing the following parameters in re
   - Number of transmitters/receivers
   - Applied delays/phase shifts
   - Number of operating frequencies and their values
+
+  ![system paramters](imgs/params.png)
+
 - **Phased Array Geometry:**
   - Linear or curved geometry
   - Customizable curvature parameters
+
+  ![curved](imgs/curved.png)
 
 ### 2. Visualization
 - **Beamforming Map:** Visualize constructive and destructive interference patterns in a 2D space.
@@ -36,6 +42,26 @@ The simulator includes three predefined scenarios, inspired by real-world applic
 
 Users can load these scenarios using parameter settings files, visualize them, and fine-tune the parameters to explore different outcomes.
 
+---
+## Scenarios
+
+### Scenario 1: 5G Beamforming
+- **Description:** Simulates a linear phased array for high-frequency wireless communication.
+- **Customization:** Adjust frequency bands and phase shifts for optimal beam steering.
+
+![5G](imgs/5G.png)
+
+### Scenario 2: Ultrasound Imaging
+- **Description:** Models a curved phased array for medical imaging.
+- **Customization:** Fine-tune curvature parameters and operating frequencies to simulate different imaging conditions.
+
+![ultrasound](imgs/ultrasound.png)
+
+### Scenario 3: Tumor Ablation
+- **Description:** Simulates focused energy beams for targeted tumor ablation.
+- **Customization:** Adjust the location and configuration of phased arrays for precise energy delivery.
+
+![tumor](imgs/tumor.png)
 ---
 
 ## Usage
@@ -70,18 +96,6 @@ Users can load these scenarios using parameter settings files, visualize them, a
 
 ---
 
-## Scenarios
 
-### Scenario 1: 5G Beamforming
-- **Description:** Simulates a linear phased array for high-frequency wireless communication.
-- **Customization:** Adjust frequency bands and phase shifts for optimal beam steering.
-
-### Scenario 2: Ultrasound Imaging
-- **Description:** Models a curved phased array for medical imaging.
-- **Customization:** Fine-tune curvature parameters and operating frequencies to simulate different imaging conditions.
-
-### Scenario 3: Tumor Ablation
-- **Description:** Simulates focused energy beams for targeted tumor ablation.
-- **Customization:** Adjust the location and configuration of phased arrays for precise energy delivery.
 
 
